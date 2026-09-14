@@ -1,0 +1,33 @@
+# Dependencies & environments
+node_modules/
+.venv/
+.venv-pio/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local data & secrets
+.env
+*.db
+*.db-shm
+*.db-wal
+backend/data/
+ai-service/models/
+
+# Builds
+dist/
+web-build/
+.expo/
+firmware/.pio/
+firmware/include/secrets.h
+
+# Local tooling
+.claude/
+
+# Editors & OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log

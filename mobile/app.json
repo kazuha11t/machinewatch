@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "MachineWatch",
+    "slug": "machinewatch",
+    "scheme": "machinewatch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0b1220",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "io.machinewatch.app"
+    },
+    "android": {
+      "package": "io.machinewatch.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0b1220",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#38bdf8"
+        }
+      ]
+    ],
+    "extra": {
+      "apiUrl": "",
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+# Full stack:            docker compose up --build
+# With simulated fleet:  docker compose --profile demo up --build
+# Dashboard: http://localhost:8080  (demo@machinewatch.io / demo1234)
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883" # ESP32 nodes on the LAN connect here
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    restart: unless-stopped
+
+  ai:
+    build: ./ai-service
+    environment:
+      BASELINE_SIZE: ${BASELINE_SIZE:-300}
+    volumes:
+      - ai-models:/models
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    depends_on:
+      - mosquitto
+      - ai
+    environment:
+      MQTT_URL: mqtt://mosquitto:1883
+      AI_SERVICE_URL: http://ai:8000
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (see .env.example)}
+      SEED_EMAIL: ${SEED_EMAIL:-demo@machinewatch.io}
+      SEED_PASSWORD: ${SEED_PASSWORD:-demo1234}
+      RETENTION_DAYS: ${RETENTION_DAYS:-7}
+    volumes:
+      - backend-data:/data
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  simulator:
+    build: ./simulator
+    profiles: ["demo"]
+    depends_on:
+      - mosquitto
+    command: ["--host", "mosquitto", "--interval", "1"]
+    restart: unless-stopped
+
+volumes:
+  mosquitto-data:
+  ai-models:
+  backend-data:
