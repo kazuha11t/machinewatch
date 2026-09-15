@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeft, BrainCircuit, Download, Pencil, Power, RefreshCw } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Link, useParams } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
+import { MachineVisual } from '../components/device-3d/MachineVisual';
 import { TelemetryChart } from '../components/TelemetryChart';
-import { Button, EmptyState, ErrorBanner, Field, FramedPanel, HealthBadge, HealthRing, Modal, Panel, PanelHeader, StatusBadge, cx, inputClass } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, Field, FramedPanel, HealthBadge, Modal, Panel, PanelHeader, StatusBadge, cx, inputClass } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import { METRIC_INFO, VIBRATION_LIMIT, VIBRATION_WARNING, formatHours, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -191,10 +193,16 @@ export function DevicePage() {
 
       <ErrorBanner message={error} />
 
-      <div className="grid gap-4 lg:grid-cols-[16rem_1fr] lg:items-start">
-        <FramedPanel className="flex flex-col items-center gap-3 p-5 text-center lg:sticky lg:top-6">
-          <HealthRing score={device.healthScore} status={device.healthStatus} size={104} />
-          <div className="min-w-0 space-y-1.5">
+      <div className="grid gap-4 lg:grid-cols-[18rem_1fr] lg:items-start">
+        <FramedPanel className="lg:sticky lg:top-6">
+          <MachineVisual
+            temperature={latest?.temperature}
+            vibration={latest?.vibration}
+            running={running && device.status === 'online'}
+            healthScore={device.healthScore}
+            healthStatus={device.healthStatus}
+          />
+          <div className="min-w-0 space-y-1.5 border-t border-line p-5 text-center">
             <p className="label text-[10px] text-muted">Machine health</p>
             <HealthBadge status={device.healthStatus} />
             <div className="text-xs">
@@ -244,7 +252,7 @@ export function DevicePage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="lg:col-span-2">
+            <RevealCard className="lg:col-span-2">
               <TelemetryChart
                 title="Vibration (RMS)"
                 unit="mm/s"
@@ -262,54 +270,62 @@ export function DevicePage() {
                   { value: VIBRATION_LIMIT, label: 'ISO limit 7.1', color: '#ff2a2a' },
                 ]}
               />
-            </div>
-            <TelemetryChart
-              title="Temperature"
-              unit="°C"
-              color={METRIC_INFO.temperature.color}
-              dataKey="temperature"
-              data={readings}
-              from={from}
-              to={windowEnd}
-              latest={latest?.temperature}
-              references={[{ value: 85, label: 'Limit 85', color: '#ff2a2a' }]}
-            />
-            <TelemetryChart
-              title="Motor current"
-              unit="A"
-              color={METRIC_INFO.current.color}
-              dataKey="current"
-              data={readings}
-              from={from}
-              to={windowEnd}
-              latest={latest?.current}
-              domain={[0, 'auto']}
-            />
-            <TelemetryChart
-              title="AI anomaly score"
-              unit=""
-              color="#f472b6"
-              dataKey="anomalyScore"
-              data={readings}
-              from={from}
-              to={windowEnd}
-              digits={2}
-              latest={readings.findLast((reading) => reading.anomalyScore !== null)?.anomalyScore}
-              domain={[0, 1]}
-              references={[{ value: 0.5, label: 'Anomaly threshold', color: '#ff2a2a' }]}
-            />
-            {hasHumidity && (
+            </RevealCard>
+            <RevealCard>
               <TelemetryChart
-                title="Ambient humidity"
-                unit="%"
-                color={METRIC_INFO.humidity.color}
-                dataKey="humidity"
+                title="Temperature"
+                unit="°C"
+                color={METRIC_INFO.temperature.color}
+                dataKey="temperature"
                 data={readings}
                 from={from}
                 to={windowEnd}
-                digits={0}
-                latest={latest?.humidity}
+                latest={latest?.temperature}
+                references={[{ value: 85, label: 'Limit 85', color: '#ff2a2a' }]}
               />
+            </RevealCard>
+            <RevealCard>
+              <TelemetryChart
+                title="Motor current"
+                unit="A"
+                color={METRIC_INFO.current.color}
+                dataKey="current"
+                data={readings}
+                from={from}
+                to={windowEnd}
+                latest={latest?.current}
+                domain={[0, 'auto']}
+              />
+            </RevealCard>
+            <RevealCard>
+              <TelemetryChart
+                title="AI anomaly score"
+                unit=""
+                color="#f472b6"
+                dataKey="anomalyScore"
+                data={readings}
+                from={from}
+                to={windowEnd}
+                digits={2}
+                latest={readings.findLast((reading) => reading.anomalyScore !== null)?.anomalyScore}
+                domain={[0, 1]}
+                references={[{ value: 0.5, label: 'Anomaly threshold', color: '#ff2a2a' }]}
+              />
+            </RevealCard>
+            {hasHumidity && (
+              <RevealCard>
+                <TelemetryChart
+                  title="Ambient humidity"
+                  unit="%"
+                  color={METRIC_INFO.humidity.color}
+                  dataKey="humidity"
+                  data={readings}
+                  from={from}
+                  to={windowEnd}
+                  digits={0}
+                  latest={latest?.humidity}
+                />
+              </RevealCard>
             )}
           </div>
 
@@ -330,6 +346,22 @@ export function DevicePage() {
 
       <EditDeviceModal device={device} open={editing} onClose={() => setEditing(false)} />
     </div>
+  );
+}
+
+/** Bento chart tiles reveal on scroll (once) — never re-triggered by realtime data ticks. */
+function RevealCard({ children, className }: { children: ReactNode; className?: string }) {
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduced ? false : { opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
