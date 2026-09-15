@@ -10,6 +10,8 @@ import { RulesPage } from './pages/RulesPage';
 
 // The device page pulls in the charting library; load it only when a machine is opened.
 const DevicePage = lazy(() => import('./pages/DevicePage').then((module) => ({ default: module.DevicePage })));
+// Public marketing page — pulls in GSAP; never needed by the authenticated dashboard.
+const ShowcasePage = lazy(() => import('./pages/ShowcasePage').then((module) => ({ default: module.ShowcasePage })));
 
 export function App() {
   return (
@@ -17,6 +19,14 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/showcase"
+            element={
+              <Suspense fallback={<p className="p-6 text-sm text-muted">Loading…</p>}>
+                <ShowcasePage />
+              </Suspense>
+            }
+          />
           <Route
             element={
               <RequireAuth>
