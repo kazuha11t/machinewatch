@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { BellRing, BrainCircuit, Cpu, PowerOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
+import { FactoryFloor } from '../components/factory-floor/FactoryFloor';
 import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
 import { api } from '../lib/api';
 import { METRIC_INFO, formatClock, formatHours, formatValue, timeAgo } from '../lib/format';
@@ -47,6 +48,8 @@ export function OverviewPage() {
           </span>
         ))}
       />
+
+      <FactoryFloor devices={list} latest={latest} now={now} />
 
       <div className="grid gap-px border border-line bg-line lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div className="bg-panel p-4">
