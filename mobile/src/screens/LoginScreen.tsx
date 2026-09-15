@@ -5,7 +5,7 @@ import { errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { Button } from '../components/ui';
 import { API_URL } from '../config';
-import { colors, radius } from '../theme';
+import { colors, mono, radius } from '../theme';
 
 export function LoginScreen() {
   const { login } = useAuth();
@@ -73,22 +73,23 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.surface },
   container: { flex: 1, justifyContent: 'center', padding: 24, gap: 32 },
   brand: { alignItems: 'center', gap: 8 },
-  logo: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  logo: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.textStrong, alignItems: 'center', justifyContent: 'center' },
   logoText: { color: colors.surface, fontWeight: '800', fontSize: 20 },
-  title: { color: colors.textStrong, fontSize: 26, fontWeight: '700' },
+  title: { color: colors.textStrong, fontSize: 26, fontWeight: '900', textTransform: 'uppercase', letterSpacing: -0.5 },
   subtitle: { color: colors.muted, fontSize: 14 },
   form: { gap: 8 },
-  label: { color: colors.muted, fontSize: 13, marginTop: 6 },
+  label: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 6 },
   input: {
     backgroundColor: colors.panel,
     borderColor: colors.line,
     borderWidth: 1,
     borderRadius: radius.sm,
     color: colors.textStrong,
+    fontFamily: mono,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 15,
   },
-  error: { color: colors.bad, backgroundColor: 'rgba(248,113,113,0.1)', padding: 10, borderRadius: radius.sm },
-  hint: { color: colors.muted, fontSize: 12, textAlign: 'center', marginTop: 12 },
+  error: { color: colors.bad, backgroundColor: 'rgba(255,42,42,0.1)', padding: 10, borderRadius: radius.sm, fontSize: 13 },
+  hint: { color: colors.muted, fontSize: 12, textAlign: 'center', marginTop: 12, fontFamily: mono },
 });

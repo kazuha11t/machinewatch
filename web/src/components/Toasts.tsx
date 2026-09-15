@@ -3,10 +3,11 @@ import { AlertTriangle, X } from 'lucide-react';
 import { Link } from 'react-router';
 import { SEVERITY_STYLES } from '../lib/format';
 import { useLive } from '../lib/live';
-import type { Alert } from '../lib/types';
+import type { Alert, Severity } from '../lib/types';
 import { cx } from './ui';
 
 const TOAST_DURATION_MS = 7000;
+const EDGE: Record<Severity, string> = { warning: 'border-l-warn', critical: 'border-l-accent' };
 
 export function Toasts() {
   const { toasts, devices, dismissToast } = useLive();
@@ -27,13 +28,13 @@ function Toast({ alert, deviceName, onDismiss }: { alert: Alert; deviceName: str
 
   const style = SEVERITY_STYLES[alert.severity];
   return (
-    <div className={cx('pointer-events-auto flex gap-3 rounded-xl border bg-panel p-3 shadow-xl ring-1', style.ring, 'border-line')}>
+    <div className={cx('pointer-events-auto flex gap-3 border border-line bg-panel p-3 border-l-4', EDGE[alert.severity])}>
       <AlertTriangle className={cx('mt-0.5 size-5 shrink-0', style.text)} />
       <Link to={`/devices/${alert.deviceId}`} className="min-w-0 flex-1" onClick={() => onDismiss(alert.id)}>
-        <p className="text-sm font-semibold">{deviceName}</p>
-        <p className="text-sm text-slate-300">{alert.message}</p>
+        <p className="label text-xs font-bold text-foreground">{deviceName}</p>
+        <p className="mt-0.5 text-sm text-foreground/90">{alert.message}</p>
       </Link>
-      <button onClick={() => onDismiss(alert.id)} className="self-start rounded p-1 text-muted hover:text-slate-100" aria-label="Dismiss">
+      <button onClick={() => onDismiss(alert.id)} className="self-start p-1 text-muted hover:text-foreground" aria-label="Dismiss">
         <X className="size-4" />
       </button>
     </div>

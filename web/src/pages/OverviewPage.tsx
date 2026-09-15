@@ -2,17 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { BellRing, BrainCircuit, Cpu, HeartPulse, PowerOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
-import { EmptyState, HealthRing, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
+import { EmptyState, HealthMeter, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
 import { api } from '../lib/api';
-import { METRIC_INFO, formatHours, formatValue, timeAgo } from '../lib/format';
+import { METRIC_INFO, formatClock, formatHours, formatValue, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
 import type { Alert, Device, Metric, Reading } from '../lib/types';
 
 const CARD_METRICS: Metric[] = ['temperature', 'vibration', 'current'];
+const SPARK_COLOR = '#9a9a9a';
 
 export function OverviewPage() {
   const { devices, devicesLoaded, latest, recent, overview, alertsVersion } = useLive();
-  const now = useNow(2000);
+  const now = useNow(1000);
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
@@ -24,12 +25,21 @@ export function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Fleet overview</h1>
-        <p className="text-sm text-muted">Live condition of every connected machine.</p>
+      <header className="border-b border-line pb-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="label text-[10px] text-accent">// Fleet status overview</p>
+            <h1 className="font-display mt-1 text-4xl sm:text-5xl">Overview</h1>
+          </div>
+          <div className="text-right">
+            <p className="tabular font-mono text-sm font-bold text-foreground">{formatClock(now)}</p>
+            <p className="label text-[10px] text-muted">Sys time</p>
+          </div>
+        </div>
+        <p className="label mt-3 text-[10px] text-muted">Live condition of every connected machine.</p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
         <Kpi icon={Cpu} label="Machines online" value={overview ? `${overview.devices.online}/${overview.devices.total}` : '—'} />
         <Kpi
           icon={BellRing}
@@ -46,7 +56,7 @@ export function OverviewPage() {
         <section>
           {devicesLoaded && list.length === 0 ? (
             <Panel>
-              <EmptyState icon={<Cpu className="size-8" />} title="No machines connected yet">
+              <EmptyState icon={<Cpu className="size-8" />} title="No active units">
                 Start the simulator or power on an ESP32. Devices register themselves on their first MQTT message.
               </EmptyState>
             </Panel>
@@ -60,11 +70,11 @@ export function OverviewPage() {
         </section>
 
         <Panel className="self-start">
-          <PanelHeader title="Open alerts" action={<Link to="/alerts" className="text-xs text-sky-300 hover:text-sky-200">View all</Link>} />
+          <PanelHeader title="Open alerts" action={<Link to="/alerts" className="label text-[10px] font-bold text-accent hover:text-foreground">View all</Link>} />
           {alerts.length === 0 ? (
             <EmptyState title="All clear">No open alerts right now.</EmptyState>
           ) : (
-            <ul className="divide-y divide-line">
+            <ul>
               {alerts.map((alert) => (
                 <AlertRow key={alert.id} alert={alert} deviceName={devices[alert.deviceId]?.name} now={now} />
               ))}
@@ -78,14 +88,14 @@ export function OverviewPage() {
 
 function Kpi({ icon: Icon, label, value, hint, tone }: { icon: typeof Cpu; label: string; value: string | number; hint?: string; tone?: 'bad' }) {
   return (
-    <Panel className="p-4">
-      <div className="flex items-center gap-2 text-xs text-muted">
-        <Icon className="size-4" />
+    <div className="bg-panel p-4">
+      <div className="label flex items-center justify-between text-[10px] text-muted">
         {label}
+        <Icon className="size-3.5" />
       </div>
-      <p className="tabular mt-2 font-mono text-2xl font-semibold">{value}</p>
-      {hint && <p className={cx('text-xs', tone === 'bad' ? 'text-bad' : 'text-muted')}>{hint}</p>}
-    </Panel>
+      <p className="tabular mt-2 font-mono text-3xl font-bold text-foreground">{value}</p>
+      {hint && <p className={cx('label mt-1 text-[10px]', tone === 'bad' ? 'text-accent' : 'text-muted')}>{hint}</p>}
+    </div>
   );
 }
 
@@ -93,52 +103,48 @@ function MachineCard({ device, reading, history, now }: { device: Device; readin
   const vibration = history.map((point) => point.vibration).filter((value): value is number => value !== null);
   const stopped = device.relayState === false || reading?.running === false;
   const offline = device.status === 'offline';
+  const critical = device.healthStatus === 'critical' && !offline;
 
   return (
     <Link
       to={`/devices/${device.id}`}
-      className={cx(
-        'group block rounded-xl border bg-panel p-4 transition-colors hover:border-sky-500/50',
-        device.healthStatus === 'critical' && !offline ? 'border-bad/40' : 'border-line',
-      )}
+      className={cx('group block border bg-panel p-4 transition-colors', critical ? 'border-accent/50 hover:border-accent' : 'border-line hover:border-foreground')}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 border-b border-line pb-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-semibold group-hover:text-sky-300">{device.name}</h3>
-          </div>
-          <p className="truncate text-xs text-muted">
-            {[device.location, device.type].filter(Boolean).join(' · ') || device.id}
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <StatusBadge status={device.status} />
-            {stopped && !offline && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/15 px-2 py-0.5 text-xs text-slate-300">
-                <PowerOff className="size-3" /> Stopped
-              </span>
-            )}
-          </div>
+          <p className="label text-[10px] text-muted">Unit / {device.id}</p>
+          <h3 className="font-display group-hover:text-accent mt-0.5 line-clamp-2 break-words text-lg">{device.name}</h3>
+          <p className="label mt-1.5 truncate text-[10px] text-muted">{[device.location, device.type].filter(Boolean).join(' / ') || '—'}</p>
         </div>
-        <HealthRing score={offline ? null : device.healthScore} status={offline ? null : device.healthStatus} size={58} />
+        <HealthMeter score={offline ? null : device.healthScore} status={offline ? null : device.healthStatus} />
       </div>
 
-      <dl className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <StatusBadge status={device.status} />
+        {stopped && !offline && (
+          <span className="label inline-flex items-center gap-1 border border-line px-1.5 py-0.5 text-[10px] font-semibold text-muted">
+            <PowerOff className="size-3" /> Stopped
+          </span>
+        )}
+      </div>
+
+      <dl className="mt-3 grid grid-cols-3 gap-px border border-line bg-line">
         {CARD_METRICS.map((metric) => (
-          <div key={metric} className="rounded-lg bg-surface/60 px-2.5 py-2">
-            <dt className="text-[11px] text-muted">{METRIC_INFO[metric].label}</dt>
-            <dd className="tabular font-mono text-sm font-semibold text-slate-100">
+          <div key={metric} className="bg-panel px-2.5 py-2">
+            <dt className="label text-[9px] text-muted">{METRIC_INFO[metric].label}</dt>
+            <dd className="tabular font-mono text-sm font-bold text-foreground">
               {formatValue(metric, reading?.[metric])}
-              <span className="ml-0.5 text-[10px] font-normal text-muted">{METRIC_INFO[metric].unit}</span>
+              <span className="ml-0.5 text-[9px] font-normal text-muted">{METRIC_INFO[metric].unit}</span>
             </dd>
           </div>
         ))}
       </dl>
 
-      <Sparkline values={vibration} color={METRIC_INFO.vibration.color} height={36} className="mt-3 opacity-80" />
+      <Sparkline values={vibration} color={SPARK_COLOR} height={32} className="mt-3 opacity-70" />
 
-      <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-2 text-xs">
         <AiSummary device={device} />
-        <span className="shrink-0 text-muted">{timeAgo(device.lastSeen === null ? null : Math.max(device.lastSeen, reading?.ts ?? 0), now)}</span>
+        <span className="label shrink-0 text-[10px] text-muted">{timeAgo(device.lastSeen === null ? null : Math.max(device.lastSeen, reading?.ts ?? 0), now)}</span>
       </div>
     </Link>
   );

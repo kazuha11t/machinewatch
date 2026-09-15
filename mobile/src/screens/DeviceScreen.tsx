@@ -6,7 +6,7 @@ import { AlertItem } from '../components/AlertItem';
 import { Button, Card, EmptyState, HealthRing, Sparkline, StatusPill } from '../components/ui';
 import { useLive, useNow } from '../live';
 import type { RootStackParamList } from '../navigation';
-import { colors, formatValue, HEALTH_COLORS, METRIC_INFO, timeAgo } from '../theme';
+import { colors, formatValue, HEALTH_COLORS, METRIC_INFO, mono, timeAgo } from '../theme';
 import type { Alert, Metric, Reading } from '../types';
 import { aiLine } from './FleetScreen';
 
@@ -118,7 +118,7 @@ export function DeviceScreen({ route, navigation }: Props) {
         })}
       </View>
 
-      <Text style={styles.sectionTitle}>Recent alerts</Text>
+      <Text style={styles.sectionTitle}>[ Recent alerts ]</Text>
       <Card style={{ padding: 0 }}>
         {alerts.length === 0 ? (
           <EmptyState title="No alerts for this machine" />
@@ -141,11 +141,11 @@ const styles = StyleSheet.create({
   screen: { backgroundColor: colors.surface },
   content: { padding: 16, gap: 12, paddingBottom: 40 },
   healthCard: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  healthLabel: { color: colors.muted, fontWeight: '700', fontSize: 13, letterSpacing: 0.5 },
+  healthLabel: { color: colors.muted, fontWeight: '700', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' },
   muted: { color: colors.muted, fontSize: 12 },
   metricHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  metricTitle: { color: colors.text, fontSize: 14, fontWeight: '500' },
-  metricValue: { fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  metricTitle: { color: colors.text, fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  metricValue: { fontFamily: mono, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
   metricUnit: { color: colors.muted, fontSize: 12, fontWeight: '400' },
-  sectionTitle: { color: colors.textStrong, fontSize: 16, fontWeight: '600', marginTop: 8 },
+  sectionTitle: { color: colors.textStrong, fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 8 },
 });

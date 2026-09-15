@@ -39,39 +39,45 @@ export function LoginPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden border-r border-line bg-panel p-12 lg:flex lg:flex-col">
-        <div className="pointer-events-none absolute -top-40 -left-40 size-[32rem] rounded-full bg-sky-500/10 blur-3xl" />
+      <div
+        className="relative hidden overflow-hidden border-r border-line bg-panel p-12 lg:flex lg:flex-col"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(0deg, var(--color-line) 0px, var(--color-line) 1px, transparent 1px, transparent 64px), repeating-linear-gradient(90deg, var(--color-line) 0px, var(--color-line) 1px, transparent 1px, transparent 64px)',
+          backgroundPosition: '-1px -1px',
+        }}
+      >
         <div className="flex items-center gap-2.5">
-          <div className="grid size-9 place-items-center rounded-lg bg-sky-500 text-slate-950">
+          <div className="grid size-9 shrink-0 place-items-center border border-foreground bg-foreground text-surface">
             <Activity className="size-5" strokeWidth={2.5} />
           </div>
-          <span className="text-lg font-semibold">MachineWatch</span>
+          <span className="font-display text-lg">MachineWatch</span>
         </div>
-        <div className="relative my-auto max-w-lg">
-          <h1 className="text-4xl leading-tight font-semibold tracking-tight">
-            Catch machine failures <span className="text-sky-400">hours before</span> they stop your line.
+        <div className="relative my-auto max-w-lg bg-panel/80 py-2">
+          <h1 className="font-display text-4xl sm:text-5xl">
+            Catch machine failures <span className="text-accent">hours before</span> they stop your line.
           </h1>
           <ul className="mt-10 space-y-6">
             {HIGHLIGHTS.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-4">
-                <div className="grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-panel-raised text-sky-300">
+                <div className="grid size-10 shrink-0 place-items-center border border-line bg-panel-raised text-accent">
                   <Icon className="size-5" />
                 </div>
                 <div>
-                  <p className="font-medium">{title}</p>
-                  <p className="text-sm text-muted">{text}</p>
+                  <p className="label text-xs font-bold text-foreground">{title}</p>
+                  <p className="mt-0.5 text-sm text-muted">{text}</p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
-        <p className="relative text-xs text-muted">ESP32 · MQTT · Node.js · Python · React · React Native</p>
+        <p className="label relative text-[10px] text-muted">ESP32 / MQTT / Node.js / Python / React / React Native</p>
       </div>
 
       <div className="flex items-center justify-center px-4 py-12">
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-5">
           <div>
-            <h2 className="text-2xl font-semibold">Sign in</h2>
+            <h2 className="font-display text-3xl">Sign in</h2>
             <p className="mt-1 text-sm text-muted">Use the demo account below to explore the dashboard.</p>
           </div>
           <ErrorBanner message={error} />
@@ -91,9 +97,8 @@ export function LoginPage() {
           <Button type="submit" variant="primary" className="w-full" disabled={submitting}>
             {submitting ? 'Signing in…' : 'Sign in'}
           </Button>
-          <p className="rounded-lg border border-line bg-panel px-3 py-2 text-xs text-muted">
-            Demo account: <span className="font-mono text-slate-300">demo@machinewatch.io</span> /{' '}
-            <span className="font-mono text-slate-300">demo1234</span>
+          <p className="border border-line bg-panel px-3 py-2 font-mono text-xs text-muted">
+            Demo account: <span className="text-foreground">demo@machinewatch.io</span> / <span className="text-foreground">demo1234</span>
           </p>
         </form>
       </div>

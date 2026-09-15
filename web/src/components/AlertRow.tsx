@@ -34,32 +34,32 @@ export function AlertRow({
   const acknowledged = alert.acknowledgedAt !== null;
 
   return (
-    <li className={cx('flex items-start gap-3 px-4 py-3', acknowledged && 'opacity-60')}>
-      <div className={cx('mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg', style.bg, style.text)}>
+    <li className={cx('flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0', acknowledged && 'opacity-50')}>
+      <div className={cx('mt-0.5 grid size-8 shrink-0 place-items-center border', style.bg, style.text, style.border)}>
         <Icon className="size-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
-          <span className={cx('font-semibold uppercase tracking-wide', style.text)}>{alert.severity}</span>
-          <span>·</span>
+        <div className="label flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted">
+          <span className={cx('font-bold', style.text)}>{alert.severity}</span>
+          <span>/</span>
           <span>{KIND_LABELS[alert.kind]}</span>
           {showDevice && (
             <>
-              <span>·</span>
-              <Link to={`/devices/${alert.deviceId}`} className="font-medium text-slate-300 hover:text-sky-300">
+              <span>/</span>
+              <Link to={`/devices/${alert.deviceId}`} className="font-bold text-foreground hover:text-accent">
                 {deviceName ?? alert.deviceId}
               </Link>
             </>
           )}
         </div>
-        <p className="mt-0.5 text-sm text-slate-200">{alert.message}</p>
-        <p className="mt-0.5 text-xs text-muted" title={formatDateTime(alert.ts)}>
+        <p className="mt-1 text-sm text-foreground">{alert.message}</p>
+        <p className="label mt-1 text-[10px] text-muted" title={formatDateTime(alert.ts)}>
           {timeAgo(alert.ts, now)}
-          {acknowledged && ` · acknowledged ${timeAgo(alert.acknowledgedAt, now)}`}
+          {acknowledged && ` / ack ${timeAgo(alert.acknowledgedAt, now)}`}
         </p>
       </div>
       {onAcknowledge && !acknowledged && (
-        <Button variant="ghost" className="shrink-0 px-2 py-1 text-xs" onClick={() => onAcknowledge(alert)}>
+        <Button variant="ghost" className="shrink-0 px-2 py-1" onClick={() => onAcknowledge(alert)}>
           <Check className="size-3.5" />
           Ack
         </Button>

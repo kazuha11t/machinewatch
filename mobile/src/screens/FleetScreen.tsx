@@ -4,10 +4,10 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '../api';
-import { Card, EmptyState, HealthRing, Sparkline, StatusPill } from '../components/ui';
+import { Card, EmptyState, HealthMeter, Sparkline, StatusPill } from '../components/ui';
 import { useLive, useNow } from '../live';
 import type { RootStackParamList, TabParamList } from '../navigation';
-import { colors, formatHours, formatValue, METRIC_INFO, timeAgo } from '../theme';
+import { colors, formatHours, formatValue, METRIC_INFO, mono, timeAgo } from '../theme';
 import type { Device, Metric, Overview, Reading } from '../types';
 
 type Props = CompositeScreenProps<BottomTabScreenProps<TabParamList, 'Fleet'>, NativeStackScreenProps<RootStackParamList>>;
@@ -42,7 +42,7 @@ export function FleetScreen({ navigation }: Props) {
           <Summary label="Online" value={overview ? `${overview.devices.online}/${overview.devices.total}` : '—'} />
           <Summary label="Open alerts" value={overview?.alerts.open ?? '—'} tone={overview?.alerts.critical ? colors.bad : undefined} />
           <Summary label="Avg health" value={overview?.averageHealth == null ? '—' : Math.round(overview.averageHealth)} />
-          <View style={[styles.liveDot, { backgroundColor: connected ? colors.ok : colors.warn }]} />
+          <View style={[styles.liveDot, { backgroundColor: connected ? colors.live : colors.warn }]} />
         </View>
       }
       ListEmptyComponent={
@@ -76,18 +76,19 @@ function MachineCard({ device, reading, history, now, onPress }: { device: Devic
   const vibration = history.map((point) => point.vibration).filter((value): value is number => value !== null);
 
   return (
-    <Card onPress={onPress} style={[styles.card, device.healthStatus === 'critical' && !offline && { borderColor: 'rgba(248,113,113,0.5)' }]}>
+    <Card onPress={onPress} style={[styles.card, device.healthStatus === 'critical' && !offline && { borderColor: 'rgba(255,42,42,0.5)' }]}>
       <View style={styles.cardHeader}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={styles.name} numberOfLines={1}>
+          <Text style={styles.unit}>UNIT / {device.id}</Text>
+          <Text style={styles.name} numberOfLines={2}>
             {device.name}
           </Text>
           <Text style={styles.meta} numberOfLines={1}>
-            {[device.location, device.type].filter(Boolean).join(' · ') || device.id}
+            {[device.location, device.type].filter(Boolean).join(' / ') || '—'}
           </Text>
           <StatusPill status={device.status} />
         </View>
-        <HealthRing score={offline ? null : device.healthScore} status={offline ? null : device.healthStatus} />
+        <HealthMeter score={offline ? null : device.healthScore} status={offline ? null : device.healthStatus} />
       </View>
 
       <View style={styles.metrics}>
@@ -107,7 +108,7 @@ function MachineCard({ device, reading, history, now, onPress }: { device: Devic
       </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.footerText, device.hoursToLimit !== null && { color: colors.warn, fontWeight: '600' }]}>{aiLine(device)}</Text>
+        <Text style={[styles.aiLine, device.hoursToLimit !== null && { color: colors.warn, fontWeight: '700' }]}>{aiLine(device)}</Text>
         <Text style={styles.footerText}>{timeAgo(device.lastSeen, now)}</Text>
       </View>
     </Card>
@@ -124,20 +125,22 @@ export function aiLine(device: Device): string {
 const styles = StyleSheet.create({
   list: { backgroundColor: colors.surface },
   content: { padding: 16, gap: 12 },
-  summary: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderRadius: 12, padding: 14, marginBottom: 4, borderColor: colors.line, borderWidth: 1 },
+  summary: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.panel, borderRadius: 0, padding: 14, marginBottom: 4, borderColor: colors.line, borderWidth: 1 },
   summaryItem: { flex: 1 },
-  summaryValue: { color: colors.textStrong, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  summaryLabel: { color: colors.muted, fontSize: 12 },
-  liveDot: { width: 8, height: 8, borderRadius: 4 },
+  summaryValue: { color: colors.textStrong, fontFamily: mono, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  summaryLabel: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
+  liveDot: { width: 8, height: 8, borderRadius: 0 },
   card: { gap: 12 },
   cardHeader: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
-  name: { color: colors.textStrong, fontSize: 16, fontWeight: '600' },
-  meta: { color: colors.muted, fontSize: 12 },
+  unit: { color: colors.muted, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
+  name: { color: colors.textStrong, fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
+  meta: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
   metrics: { flexDirection: 'row', gap: 8 },
-  metric: { flex: 1, backgroundColor: colors.surface, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
-  metricLabel: { color: colors.muted, fontSize: 11 },
-  metricValue: { color: colors.textStrong, fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  metric: { flex: 1, backgroundColor: colors.surface, borderRadius: 0, borderWidth: 1, borderColor: colors.line, paddingHorizontal: 10, paddingVertical: 8 },
+  metricLabel: { color: colors.muted, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
+  metricValue: { color: colors.textStrong, fontFamily: mono, fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] },
   metricUnit: { color: colors.muted, fontSize: 10, fontWeight: '400' },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  footerText: { color: colors.muted, fontSize: 12 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'center' },
+  aiLine: { flex: 1, color: colors.muted, fontSize: 12 },
+  footerText: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.3 },
 });

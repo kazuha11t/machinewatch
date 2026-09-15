@@ -1,18 +1,25 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font-display: 'Archivo Black', 'Inter', ui-sans-serif, sans-serif;
 
-  --color-surface: #0b1220;
-  --color-panel: #111a2d;
-  --color-panel-raised: #16223a;
-  --color-line: #22304b;
-  --color-muted: #8594b0;
-  --color-accent: #38bdf8;
-  --color-ok: #34d399;
-  --color-warn: #fbbf24;
-  --color-bad: #f87171;
+  /* Deactivated-CRT substrate. Never pure #000. */
+  --color-surface: #0a0a0a;
+  --color-panel: #111111;
+  --color-panel-raised: #1a1a1a;
+  --color-line: #2b2b2b;
+
+  --color-foreground: #eaeaea;
+  --color-muted: #7a7a7a;
+
+  /* Single structural accent. Reserved for destructive actions, critical state and focus. */
+  --color-accent: #ff2a2a;
+  /* Warning state only — never decorative. */
+  --color-warn: #d9a441;
+  /* Reserved exclusively for the live-connection indicator. Do not reuse elsewhere. */
+  --color-live: #4af626;
 }
 
 html,
@@ -23,7 +30,8 @@ body,
 
 body {
   background: var(--color-surface);
-  color: #e2e8f0;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -31,6 +39,56 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Macro-typography: structural headers. */
+.font-display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+}
+
+/* Micro-typography: metadata, labels, unit IDs. */
+.label {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* CSS Grid "hairline" technique: gap-px on a --color-line parent with --color-panel/--color-surface
+   children renders razor-thin dividers without individual border declarations. */
+.grid-hairline {
+  background: var(--color-line);
+}
+
 .recharts-cartesian-axis-tick-value {
   font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+/* Simulated CRT scanline sweep. Fixed, non-interactive, uniform across the whole app. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.5) 0px,
+    rgba(0, 0, 0, 0.5) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.18;
+}
+
+/* Mechanical noise / sensor grain. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }

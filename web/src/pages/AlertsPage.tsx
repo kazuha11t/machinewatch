@@ -54,10 +54,11 @@ export function AlertsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Alerts</h1>
-          <p className="text-sm text-muted">Threshold breaches, AI-detected anomalies and connectivity events.</p>
+          <p className="label text-[10px] text-accent">// Alert log</p>
+          <h1 className="font-display mt-1 text-4xl">Alerts</h1>
+          <p className="label mt-2 text-[10px] text-muted">Threshold breaches, AI-detected anomalies and connectivity events.</p>
         </div>
         <Button onClick={acknowledgeAll} disabled={!hasOpen}>
           <CheckCheck className="size-4" /> Acknowledge all
@@ -65,7 +66,7 @@ export function AlertsPage() {
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex rounded-lg border border-line bg-panel p-1" role="tablist">
+        <div className="flex gap-px bg-line" role="tablist">
           {TABS.map((tab) => (
             <button
               key={tab.state}
@@ -73,8 +74,8 @@ export function AlertsPage() {
               aria-selected={state === tab.state}
               onClick={() => setState(tab.state)}
               className={cx(
-                'rounded-md px-3 py-1 text-xs font-medium',
-                state === tab.state ? 'bg-sky-500/15 text-sky-300' : 'text-muted hover:text-slate-100',
+                'label border-b-2 bg-panel px-3 py-1.5 text-[11px] font-bold',
+                state === tab.state ? 'border-b-accent text-foreground' : 'border-b-transparent text-muted hover:text-foreground',
               )}
             >
               {tab.label}
@@ -84,7 +85,7 @@ export function AlertsPage() {
         <select
           value={deviceId}
           onChange={(event) => setDeviceId(event.target.value)}
-          className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm text-slate-200"
+          className="label border border-line bg-panel px-3 py-1.5 text-[11px] text-foreground focus:border-accent focus:outline-none"
           aria-label="Filter by machine"
         >
           <option value="">All machines</option>
@@ -104,7 +105,7 @@ export function AlertsPage() {
         ) : alerts.length === 0 ? (
           <EmptyState icon={<BellOff className="size-8" />} title={state === 'open' ? 'No open alerts' : 'No alerts found'} />
         ) : (
-          <ul className="divide-y divide-line">
+          <ul>
             {alerts.map((alert) => (
               <AlertRow key={alert.id} alert={alert} deviceName={devices[alert.deviceId]?.name} now={now} onAcknowledge={acknowledge} />
             ))}

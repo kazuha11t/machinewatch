@@ -46,11 +46,11 @@ export function AlertItem({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12, padding: 14, borderBottomColor: colors.line, borderBottomWidth: StyleSheet.hairlineWidth },
-  bar: { width: 3, borderRadius: 2 },
+  bar: { width: 3, borderRadius: 0 },
   meta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
-  metaText: { color: colors.muted, fontSize: 12 },
-  device: { color: colors.text, fontWeight: '600' },
+  metaText: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: '600' },
+  device: { color: colors.text, fontWeight: '700' },
   message: { color: colors.text, fontSize: 14, lineHeight: 20 },
-  ack: { alignSelf: 'center', borderColor: colors.line, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  ackText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
+  ack: { alignSelf: 'center', borderColor: colors.line, borderWidth: 1, borderRadius: 0, paddingHorizontal: 12, paddingVertical: 6 },
+  ackText: { color: colors.textStrong, fontWeight: '700', fontSize: 13 },
 });

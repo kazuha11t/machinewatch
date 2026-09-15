@@ -18,21 +18,21 @@ export function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col border-b border-line bg-panel lg:sticky lg:top-0 lg:h-screen lg:w-60 lg:border-r lg:border-b-0">
-        <div className="flex items-center justify-between gap-3 px-4 py-4 lg:px-5 lg:py-5">
+      <aside className="flex shrink-0 flex-col border-b border-line bg-panel lg:sticky lg:top-0 lg:h-screen lg:w-64 lg:border-r lg:border-b-0">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-4 lg:px-5 lg:py-5">
           <div className="flex items-center gap-2.5">
-            <div className="grid size-8 place-items-center rounded-lg bg-sky-500 text-slate-950">
-              <Activity className="size-5" strokeWidth={2.5} />
+            <div className="grid size-8 shrink-0 place-items-center border border-foreground bg-foreground text-surface">
+              <Activity className="size-4" strokeWidth={2.5} />
             </div>
             <div>
-              <p className="leading-tight font-semibold">MachineWatch</p>
-              <p className="text-[11px] leading-tight text-muted">Predictive maintenance</p>
+              <p className="font-display text-sm leading-none">MachineWatch</p>
+              <p className="label mt-1 text-[10px] leading-none text-muted">Predictive maintenance</p>
             </div>
           </div>
           <ConnectionPill connected={connected} className="lg:hidden" />
         </div>
 
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:px-3 lg:pb-0">
+        <nav className="flex gap-px overflow-x-auto bg-line px-px pb-px lg:flex-col lg:px-0 lg:pb-0" aria-label="Primary">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -40,15 +40,15 @@ export function Layout() {
               end={end}
               className={({ isActive }) =>
                 cx(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm whitespace-nowrap transition-colors',
-                  isActive ? 'bg-sky-500/10 font-medium text-sky-300' : 'text-muted hover:bg-panel-raised hover:text-slate-100',
+                  'label flex items-center gap-3 border-l-2 bg-panel px-4 py-2.5 text-[11px] font-bold whitespace-nowrap transition-colors',
+                  isActive ? 'border-l-accent bg-panel-raised text-foreground' : 'border-l-transparent text-muted hover:bg-panel-raised hover:text-foreground',
                 )
               }
             >
               <Icon className="size-4" />
               {label}
               {to === '/alerts' && openAlerts > 0 && (
-                <span className="tabular ml-auto rounded-full bg-bad/15 px-1.5 text-xs font-semibold text-bad">{openAlerts}</span>
+                <span className="tabular ml-auto bg-accent px-1.5 py-0.5 text-[10px] font-bold text-surface">{openAlerts}</span>
               )}
             </NavLink>
           ))}
@@ -56,12 +56,12 @@ export function Layout() {
 
         <div className="mt-auto hidden border-t border-line p-4 lg:block">
           <ConnectionPill connected={connected} />
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">{user?.name}</p>
-              <p className="truncate text-xs text-muted">{user?.email}</p>
+              <p className="truncate text-sm font-bold text-foreground">{user?.name}</p>
+              <p className="label truncate text-[10px] text-muted">{user?.email}</p>
             </div>
-            <button onClick={logout} className="rounded-md p-2 text-muted hover:bg-panel-raised hover:text-slate-100" aria-label="Sign out" title="Sign out">
+            <button onClick={logout} className="border border-line p-2 text-muted hover:border-foreground hover:text-foreground" aria-label="Sign out" title="Sign out">
               <LogOut className="size-4" />
             </button>
           </div>
@@ -78,9 +78,9 @@ export function Layout() {
 
 function ConnectionPill({ connected, className }: { connected: boolean; className?: string }) {
   return (
-    <span className={cx('inline-flex items-center gap-2 text-xs', connected ? 'text-ok' : 'text-warn', className)}>
-      <span className={cx('size-2 rounded-full', connected ? 'bg-ok' : 'animate-pulse bg-warn')} />
-      {connected ? 'Live' : 'Reconnecting…'}
+    <span className={cx('label inline-flex items-center gap-2 text-[10px] font-bold', connected ? 'text-live' : 'text-warn', className)}>
+      <span className={cx('size-1.5', connected ? 'bg-live' : 'animate-pulse bg-warn')} />
+      {connected ? 'Live' : 'Reconnecting'}
     </span>
   );
 }

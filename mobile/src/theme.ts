@@ -1,21 +1,28 @@
+import { Platform } from 'react-native';
 import type { HealthStatus, Metric, Severity } from './types';
 
+// Deactivated-CRT palette, matching the web dashboard's Tactical Telemetry redesign.
+// Red is the single structural accent, reserved for destructive actions and critical state.
+// Green is reserved exclusively for the live-connection indicator — never reused elsewhere.
 export const colors = {
-  surface: '#0b1220',
-  panel: '#111a2d',
-  panelRaised: '#16223a',
-  line: '#22304b',
-  text: '#e2e8f0',
-  textStrong: '#f8fafc',
-  muted: '#8594b0',
-  accent: '#38bdf8',
-  ok: '#34d399',
-  warn: '#fbbf24',
-  bad: '#f87171',
-  track: '#1e293b',
+  surface: '#0a0a0a',
+  panel: '#111111',
+  panelRaised: '#1a1a1a',
+  line: '#2b2b2b',
+  text: '#eaeaea',
+  textStrong: '#ffffff',
+  muted: '#7a7a7a',
+  accent: '#ff2a2a',
+  live: '#4af626',
+  warn: '#d9a441',
+  bad: '#ff2a2a',
+  track: '#2b2b2b',
 };
 
-export const radius = { sm: 8, md: 12, lg: 16 };
+// No border-radius anywhere — corners stay square.
+export const radius = { sm: 0, md: 0, lg: 0 };
+
+export const mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
 export const METRIC_INFO: Record<Metric, { label: string; unit: string; color: string; digits: number }> = {
   temperature: { label: 'Temp', unit: '°C', color: '#fb923c', digits: 1 },
@@ -24,8 +31,9 @@ export const METRIC_INFO: Record<Metric, { label: string; unit: string; color: s
   humidity: { label: 'Humidity', unit: '%', color: '#2dd4bf', digits: 0 },
 };
 
+// Nominal state is deliberately uncolored (HUD convention: only anomalies get flagged).
 export const HEALTH_COLORS: Record<HealthStatus, string> = {
-  healthy: colors.ok,
+  healthy: colors.text,
   warning: colors.warn,
   critical: colors.bad,
 };

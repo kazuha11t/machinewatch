@@ -8,15 +8,19 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cx('rounded-xl border border-line bg-panel', className)}>{children}</section>;
+  return <section className={cx('border border-line bg-panel', className)}>{children}</section>;
 }
 
 export function PanelHeader({ title, subtitle, action }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3">
       <div className="min-w-0">
-        <h2 className="text-sm font-semibold text-slate-100">{title}</h2>
-        {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+        <h2 className="label flex items-center gap-2 text-xs font-bold text-foreground">
+          <span className="text-accent">[</span>
+          <span className="truncate">{title}</span>
+          <span className="text-accent">]</span>
+        </h2>
+        {subtitle && <p className="label mt-1 text-[10px] text-muted">{subtitle}</p>}
       </div>
       {action}
     </header>
@@ -25,11 +29,14 @@ export function PanelHeader({ title, subtitle, action }: { title: ReactNode; sub
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
+// Red is reserved for destructive/critical actions only — every primary CTA reusing it would
+// flatten the signal. Primary borrows the "selected terminal line" convention instead: an
+// inverted, full-contrast block.
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-sky-500 text-slate-950 hover:bg-sky-400',
-  secondary: 'border border-line bg-panel-raised text-slate-200 hover:border-slate-500',
-  danger: 'border border-bad/40 bg-bad/10 text-bad hover:bg-bad/20',
-  ghost: 'text-muted hover:bg-panel-raised hover:text-slate-100',
+  primary: 'bg-foreground text-surface hover:bg-white',
+  secondary: 'border border-line bg-transparent text-foreground hover:border-foreground',
+  danger: 'border border-accent/60 bg-accent/10 text-accent hover:bg-accent/20',
+  ghost: 'text-muted hover:bg-panel-raised hover:text-foreground',
 };
 
 export function Button({
@@ -42,8 +49,8 @@ export function Button({
     <button
       type="button"
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:opacity-50',
+        'label inline-flex items-center justify-center gap-2 border border-transparent px-3 py-2 text-xs font-bold transition-[color,background-color,border-color,transform] duration-150',
+        'active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0',
         BUTTON_VARIANTS[variant],
         className,
       )}
@@ -57,13 +64,8 @@ export function Button({
 export function StatusBadge({ status }: { status: DeviceStatus }) {
   const online = status === 'online';
   return (
-    <span
-      className={cx(
-        'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium',
-        online ? 'bg-ok/10 text-ok' : 'bg-slate-500/15 text-slate-400',
-      )}
-    >
-      <span className={cx('size-1.5 rounded-full', online ? 'animate-pulse bg-ok' : 'bg-slate-500')} />
+    <span className="label inline-flex items-center gap-1.5 border border-line px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
+      <span className={cx('size-1.5', online ? 'animate-pulse bg-live' : 'bg-muted')} />
       {online ? 'Online' : 'Offline'}
     </span>
   );
@@ -72,28 +74,29 @@ export function StatusBadge({ status }: { status: DeviceStatus }) {
 export function SeverityBadge({ severity }: { severity: Severity }) {
   const style = SEVERITY_STYLES[severity];
   return (
-    <span className={cx('rounded-full px-2 py-0.5 text-xs font-medium capitalize ring-1', style.bg, style.text, style.ring)}>
+    <span className={cx('label inline-flex items-center border px-1.5 py-0.5 text-[10px] font-bold', style.bg, style.text, style.border)}>
       {severity}
     </span>
   );
 }
 
 export function HealthBadge({ status }: { status: HealthStatus | null }) {
-  if (!status) return <span className="text-xs text-muted">No score yet</span>;
+  if (!status) return <span className="label text-[10px] text-muted">No score yet</span>;
   const style = HEALTH_STYLES[status];
-  return <span className={cx('rounded-full px-2 py-0.5 text-xs font-medium', style.bg, style.text)}>{style.label}</span>;
+  return <span className={cx('label inline-flex items-center border px-1.5 py-0.5 text-[10px] font-bold', style.bg, style.text, style.border)}>{style.label}</span>;
 }
 
+/** Circular progress readout, kept for pages not yet migrated to the segmented HealthMeter. */
 export function HealthRing({ score, status, size = 64 }: { score: number | null; status: HealthStatus | null; size?: number }) {
   const stroke = size / 10;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const fraction = score === null ? 0 : Math.min(Math.max(score, 0), 100) / 100;
-  const color = status ? HEALTH_STYLES[status].stroke : '#475569';
+  const color = status ? HEALTH_STYLES[status].stroke : '#7a7a7a';
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }} role="img" aria-label={`Health ${score ?? 'unknown'}`}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#1e293b" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#2b2b2b" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -101,18 +104,39 @@ export function HealthRing({ score, status, size = 64 }: { score: number | null;
           fill="none"
           stroke={color}
           strokeWidth={stroke}
-          strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - fraction)}
           style={{ transition: 'stroke-dashoffset 600ms ease, stroke 600ms ease' }}
         />
       </svg>
       <span
-        className="tabular absolute inset-0 grid place-items-center font-mono font-semibold"
-        style={{ fontSize: size * 0.26, color: status === 'critical' ? color : '#f1f5f9' }}
+        className="tabular absolute inset-0 grid place-items-center font-mono font-bold"
+        style={{ fontSize: size * 0.26, color: status === 'critical' ? color : '#eaeaea' }}
       >
         {score === null ? '—' : Math.round(score)}
       </span>
+    </div>
+  );
+}
+
+const METER_SEGMENTS = 12;
+
+/** Horizontal segmented bar readout — the tactical-telemetry replacement for HealthRing. */
+export function HealthMeter({ score, status }: { score: number | null; status: HealthStatus | null }) {
+  const style = status ? HEALTH_STYLES[status] : null;
+  const lit = score === null ? 0 : Math.round((Math.min(Math.max(score, 0), 100) / 100) * METER_SEGMENTS);
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex gap-0.5" role="img" aria-label={`Health ${score ?? 'unknown'}`}>
+        {Array.from({ length: METER_SEGMENTS }, (_, index) => (
+          <span
+            key={index}
+            className="h-3.5 w-1.5"
+            style={{ background: index < lit ? (style?.stroke ?? '#eaeaea') : 'var(--color-line)' }}
+          />
+        ))}
+      </div>
+      <span className="tabular w-7 shrink-0 text-right font-mono text-sm font-bold text-foreground">{score === null ? '—' : Math.round(score)}</span>
     </div>
   );
 }
@@ -139,7 +163,7 @@ export function EmptyState({ icon, title, children }: { icon?: ReactNode; title:
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-12 text-center">
       {icon && <div className="text-muted">{icon}</div>}
-      <p className="font-medium text-slate-200">{title}</p>
+      <p className="label font-bold text-foreground">{title}</p>
       {children && <div className="max-w-md text-sm text-muted">{children}</div>}
     </div>
   );
@@ -155,17 +179,17 @@ export function Modal({ title, open, onClose, children }: { title: string; open:
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-surface/90 p-4" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-md rounded-xl border border-line bg-panel shadow-2xl"
+        className="w-full max-w-md border-2 border-line bg-panel"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-3">
-          <h2 className="font-semibold">{title}</h2>
-          <Button variant="ghost" className="px-2" onClick={onClose} aria-label="Close">
+          <h2 className="label text-xs font-bold text-foreground">{title}</h2>
+          <Button variant="ghost" className="px-2 py-1" onClick={onClose} aria-label="Close">
             <X className="size-4" />
           </Button>
         </header>
@@ -178,16 +202,18 @@ export function Modal({ title, open, onClose, children }: { title: string; open:
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5 text-sm">
-      <span className="text-muted">{label}</span>
+      <span className="label text-[10px] text-muted">{label}</span>
       {children}
     </label>
   );
 }
 
+// focus-visible carries its own outline (not just a border shift) so keyboard/low-vision users
+// keep a strong indicator — the previous focus:outline-none had nothing else backing it up.
 export const inputClass =
-  'w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none';
+  'w-full border border-line bg-surface px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-accent';
 
 export function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
-  return <div className="rounded-lg border border-bad/40 bg-bad/10 px-3 py-2 text-sm text-bad">{message}</div>;
+  return <div className="border border-accent/50 border-l-4 border-l-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent">{message}</div>;
 }

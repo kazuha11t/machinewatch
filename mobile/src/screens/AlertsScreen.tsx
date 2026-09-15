@@ -66,9 +66,9 @@ export function AlertsScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
-  segment: { flexDirection: 'row', margin: 16, marginBottom: 8, backgroundColor: colors.panel, borderRadius: 10, padding: 4, borderColor: colors.line, borderWidth: 1 },
-  segmentItem: { flex: 1, paddingVertical: 8, borderRadius: 7, alignItems: 'center' },
-  segmentActive: { backgroundColor: 'rgba(56,189,248,0.15)' },
-  segmentText: { color: colors.muted, fontWeight: '600', fontSize: 13 },
-  segmentTextActive: { color: colors.accent },
+  segment: { flexDirection: 'row', margin: 16, marginBottom: 8, backgroundColor: colors.panel, borderRadius: 0, borderColor: colors.line, borderWidth: 1 },
+  segmentItem: { flex: 1, paddingVertical: 10, borderRadius: 0, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  segmentActive: { borderBottomColor: colors.accent },
+  segmentText: { color: colors.muted, fontWeight: '700', fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.4 },
+  segmentTextActive: { color: colors.textStrong },
 });

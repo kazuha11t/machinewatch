@@ -43,13 +43,16 @@ export function formatHours(hours: number): string {
   return `${Math.round(hours / 24)} days`;
 }
 
-export const HEALTH_STYLES: Record<HealthStatus, { label: string; text: string; bg: string; stroke: string }> = {
-  healthy: { label: 'Healthy', text: 'text-ok', bg: 'bg-ok/10', stroke: '#34d399' },
-  warning: { label: 'Warning', text: 'text-warn', bg: 'bg-warn/10', stroke: '#fbbf24' },
-  critical: { label: 'Critical', text: 'text-bad', bg: 'bg-bad/10', stroke: '#f87171' },
+// Nominal state is deliberately uncolored (HUD convention: only anomalies get flagged).
+// Warning is the sole amber use; critical reuses the one structural accent (red) rather than
+// adding a second "alert" hue.
+export const HEALTH_STYLES: Record<HealthStatus, { label: string; text: string; bg: string; border: string; stroke: string }> = {
+  healthy: { label: 'NOMINAL', text: 'text-foreground', bg: 'bg-transparent', border: 'border-line', stroke: '#eaeaea' },
+  warning: { label: 'WARNING', text: 'text-warn', bg: 'bg-warn/10', border: 'border-warn/50', stroke: '#d9a441' },
+  critical: { label: 'CRITICAL', text: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/50', stroke: '#ff2a2a' },
 };
 
-export const SEVERITY_STYLES: Record<Severity, { text: string; bg: string; ring: string }> = {
-  warning: { text: 'text-warn', bg: 'bg-warn/10', ring: 'ring-warn/30' },
-  critical: { text: 'text-bad', bg: 'bg-bad/10', ring: 'ring-bad/30' },
+export const SEVERITY_STYLES: Record<Severity, { text: string; bg: string; border: string }> = {
+  warning: { text: 'text-warn', bg: 'bg-warn/10', border: 'border-warn/50' },
+  critical: { text: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/50' },
 };

@@ -24,7 +24,7 @@ export function SettingsScreen() {
       <Card style={styles.group}>
         <Row label="Signed in as" value={user ? `${user.name}\n${user.email}` : '—'} />
         <Row label="Server" value={API_URL} />
-        <Row label="Live connection" value={connected ? 'Connected' : 'Reconnecting…'} valueColor={connected ? colors.ok : colors.warn} />
+        <Row label="Live connection" value={connected ? 'Connected' : 'Reconnecting…'} valueColor={connected ? colors.live : colors.warn} />
         <Row label="Alerts" value={notificationMode} last />
       </Card>
       <Button title="Sign out" variant="secondary" onPress={() => void logout()} />
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   group: { padding: 0 },
   row: { paddingHorizontal: 14, paddingVertical: 12, gap: 4 },
   rowBorder: { borderBottomColor: colors.line, borderBottomWidth: StyleSheet.hairlineWidth },
-  label: { color: colors.muted, fontSize: 12 },
+  label: { color: colors.muted, fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.4 },
   value: { color: colors.text, fontSize: 15 },
   footer: { color: colors.muted, fontSize: 12, textAlign: 'center' },
 });

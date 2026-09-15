@@ -32,10 +32,11 @@ export function RulesPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Alert rules</h1>
-          <p className="text-sm text-muted">
+          <p className="label text-[10px] text-accent">// Threshold configuration</p>
+          <h1 className="font-display mt-1 text-4xl">Alert rules</h1>
+          <p className="label mt-2 text-[10px] text-muted">
             Fixed thresholds complement the AI model: they catch hard limits, the AI catches subtle drift.
           </p>
         </div>
@@ -46,7 +47,7 @@ export function RulesPage() {
 
       <ErrorBanner message={error} />
 
-      <Panel className="overflow-hidden">
+      <Panel>
         {rules === null ? (
           <EmptyState title="Loading rules…" />
         ) : rules.length === 0 ? (
@@ -54,20 +55,20 @@ export function RulesPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-sm">
-              <thead className="border-b border-line text-left text-xs text-muted">
+              <thead className="label border-b border-line text-left text-[10px] text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Condition</th>
-                  <th className="px-4 py-3 font-medium">Applies to</th>
-                  <th className="px-4 py-3 font-medium">Severity</th>
-                  <th className="px-4 py-3 font-medium">Cooldown</th>
-                  <th className="px-4 py-3 font-medium">Enabled</th>
+                  <th className="px-4 py-3 font-bold">Condition</th>
+                  <th className="px-4 py-3 font-bold">Applies to</th>
+                  <th className="px-4 py-3 font-bold">Severity</th>
+                  <th className="px-4 py-3 font-bold">Cooldown</th>
+                  <th className="px-4 py-3 font-bold">Enabled</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {rules.map((rule) => (
                   <tr key={rule.id} className={cx(!rule.enabled && 'opacity-50')}>
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-4 py-3 font-medium text-foreground">
                       {METRIC_INFO[rule.metric].label} {rule.operator === '>' ? 'above' : 'below'}{' '}
                       <span className="tabular font-mono">
                         {rule.threshold} {METRIC_INFO[rule.metric].unit}
@@ -83,8 +84,8 @@ export function RulesPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button
-                        variant="ghost"
-                        className="px-2"
+                        variant="danger"
+                        className="px-2 py-1"
                         aria-label="Delete rule"
                         onClick={() => window.confirm('Delete this rule?') && mutate(() => api.deleteRule(rule.id))}
                       >
@@ -118,9 +119,12 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange(value: boole
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={cx('relative h-5 w-9 rounded-full transition-colors', checked ? 'bg-sky-500' : 'bg-slate-600')}
+      className={cx(
+        'relative h-5 w-9 border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
+        checked ? 'border-foreground bg-foreground' : 'border-line bg-transparent',
+      )}
     >
-      <span className={cx('absolute top-0.5 size-4 rounded-full bg-white transition-all', checked ? 'left-4.5' : 'left-0.5')} />
+      <span className={cx('absolute top-0.5 size-3.5 transition-all', checked ? 'left-4.5 bg-surface' : 'left-0.5 bg-muted')} />
     </button>
   );
 }

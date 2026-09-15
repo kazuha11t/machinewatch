@@ -97,7 +97,7 @@ export function DevicePage() {
       <Panel className="mx-auto max-w-xl">
         {devicesLoaded ? (
           <EmptyState title="Device not found">
-            <Link to="/" className="text-sky-300">
+            <Link to="/" className="text-accent hover:text-foreground">
               Back to overview
             </Link>
           </EmptyState>
@@ -153,18 +153,18 @@ export function DevicePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div>
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-slate-100">
+      <div className="border-b border-line pb-4">
+        <Link to="/" className="label inline-flex items-center gap-1.5 text-[10px] text-muted hover:text-foreground">
           <ArrowLeft className="size-4" /> Overview
         </Link>
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight">{device.name}</h1>
+              <h1 className="font-display text-3xl sm:text-4xl">{device.name}</h1>
               <StatusBadge status={device.status} />
             </div>
-            <p className="mt-1 text-sm text-muted">
-              {[device.location, device.type, device.id].filter(Boolean).join(' · ')} · last seen {timeAgo(device.lastSeen, now)}
+            <p className="label mt-2 text-[10px] text-muted">
+              {[device.location, device.type, device.id].filter(Boolean).join(' / ')} / last seen {timeAgo(device.lastSeen, now)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ export function DevicePage() {
         <Panel className="flex items-center gap-5 p-5 lg:col-span-1">
           <HealthRing score={device.healthScore} status={device.healthStatus} size={96} />
           <div className="min-w-0 space-y-1.5">
-            <p className="text-sm text-muted">Machine health</p>
+            <p className="label text-[10px] text-muted">Machine health</p>
             <HealthBadge status={device.healthStatus} />
             <div className="text-xs">
               <AiSummary device={device} />
@@ -203,21 +203,21 @@ export function DevicePage() {
           </div>
         </Panel>
         <Panel className="p-5 lg:col-span-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
-            <BrainCircuit className="size-4 text-sky-300" /> AI insight
+          <div className="label flex items-center gap-2 text-[11px] font-bold text-foreground">
+            <BrainCircuit className="size-4 text-accent" /> AI insight
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-slate-300">{describeInsight(device)}</p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/90">{describeInsight(device)}</p>
           {device.aiStatus === 'learning' && (
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface">
-              <div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${Math.round((device.aiProgress ?? 0) * 100)}%` }} />
+            <div className="mt-3 h-1.5 overflow-hidden bg-line">
+              <div className="h-full bg-foreground transition-all" style={{ width: `${Math.round((device.aiProgress ?? 0) * 100)}%` }} />
             </div>
           )}
         </Panel>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-semibold">Telemetry</h2>
-        <div className="flex rounded-lg border border-line bg-panel p-1" role="tablist" aria-label="Time range">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+        <h2 className="label text-xs font-bold text-foreground">[ Telemetry ]</h2>
+        <div className="flex gap-px bg-line" role="tablist" aria-label="Time range">
           {RANGES.map((range) => (
             <button
               key={range.ms}
@@ -225,8 +225,8 @@ export function DevicePage() {
               aria-selected={rangeMs === range.ms}
               onClick={() => setRangeMs(range.ms)}
               className={cx(
-                'rounded-md px-3 py-1 text-xs font-medium transition-colors',
-                rangeMs === range.ms ? 'bg-sky-500/15 text-sky-300' : 'text-muted hover:text-slate-100',
+                'label border-b-2 bg-panel px-3 py-1.5 text-[11px] font-bold transition-colors',
+                rangeMs === range.ms ? 'border-b-accent text-foreground' : 'border-b-transparent text-muted hover:text-foreground',
               )}
             >
               {range.label}
@@ -248,8 +248,8 @@ export function DevicePage() {
           latest={latest?.vibration}
           domain={[0, 'auto']}
           references={[
-            { value: VIBRATION_WARNING, label: 'ISO warning 4.5', color: '#fbbf24' },
-            { value: VIBRATION_LIMIT, label: 'ISO limit 7.1', color: '#f87171' },
+            { value: VIBRATION_WARNING, label: 'ISO warning 4.5', color: '#d9a441' },
+            { value: VIBRATION_LIMIT, label: 'ISO limit 7.1', color: '#ff2a2a' },
           ]}
         />
         <TelemetryChart
@@ -261,7 +261,7 @@ export function DevicePage() {
           from={from}
           to={windowEnd}
           latest={latest?.temperature}
-          references={[{ value: 85, label: 'Limit 85', color: '#f87171' }]}
+          references={[{ value: 85, label: 'Limit 85', color: '#ff2a2a' }]}
         />
         <TelemetryChart
           title="Motor current"
@@ -285,7 +285,7 @@ export function DevicePage() {
           digits={2}
           latest={readings.findLast((reading) => reading.anomalyScore !== null)?.anomalyScore}
           domain={[0, 1]}
-          references={[{ value: 0.5, label: 'Anomaly threshold', color: '#f87171' }]}
+          references={[{ value: 0.5, label: 'Anomaly threshold', color: '#ff2a2a' }]}
         />
         {hasHumidity && (
           <TelemetryChart
@@ -307,7 +307,7 @@ export function DevicePage() {
         {alerts.length === 0 ? (
           <EmptyState title="No alerts recorded" />
         ) : (
-          <ul className="divide-y divide-line">
+          <ul>
             {alerts.map((alert) => (
               <AlertRow key={alert.id} alert={alert} now={now} showDevice={false} onAcknowledge={acknowledge} />
             ))}

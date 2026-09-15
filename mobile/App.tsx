@@ -43,10 +43,12 @@ function MainTabs() {
   return (
     <Tabs.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: colors.panel },
+        headerStyle: { backgroundColor: colors.panel, borderBottomColor: colors.line, borderBottomWidth: 1 },
         headerTintColor: colors.textStrong,
+        headerTitleStyle: { fontWeight: '900', textTransform: 'uppercase', letterSpacing: -0.3 },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
+        tabBarLabelStyle: { fontWeight: '700', fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
         tabBarStyle: { backgroundColor: colors.panel, borderTopColor: colors.line },
         tabBarIcon: ({ color, size }) => <Ionicons name={TAB_ICONS[route.name]} color={color} size={size} />,
       })}
@@ -76,6 +78,7 @@ function RootNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: colors.panel },
         headerTintColor: colors.textStrong,
+        headerTitleStyle: { fontWeight: '900' },
         contentStyle: { backgroundColor: colors.surface },
       }}
     >
