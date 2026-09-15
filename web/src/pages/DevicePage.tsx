@@ -3,7 +3,7 @@ import { ArrowLeft, BrainCircuit, Download, Pencil, Power, RefreshCw } from 'luc
 import { Link, useParams } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
 import { TelemetryChart } from '../components/TelemetryChart';
-import { Button, EmptyState, ErrorBanner, Field, HealthBadge, HealthRing, Modal, Panel, PanelHeader, StatusBadge, cx, inputClass } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, Field, FramedPanel, HealthBadge, HealthRing, Modal, Panel, PanelHeader, StatusBadge, cx, inputClass } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import { METRIC_INFO, VIBRATION_LIMIT, VIBRATION_WARNING, formatHours, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -191,9 +191,9 @@ export function DevicePage() {
 
       <ErrorBanner message={error} />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Panel className="flex items-center gap-5 p-5 lg:col-span-1">
-          <HealthRing score={device.healthScore} status={device.healthStatus} size={96} />
+      <div className="grid gap-4 lg:grid-cols-[16rem_1fr] lg:items-start">
+        <FramedPanel className="flex flex-col items-center gap-3 p-5 text-center lg:sticky lg:top-6">
+          <HealthRing score={device.healthScore} status={device.healthStatus} size={104} />
           <div className="min-w-0 space-y-1.5">
             <p className="label text-[10px] text-muted">Machine health</p>
             <HealthBadge status={device.healthStatus} />
@@ -201,119 +201,132 @@ export function DevicePage() {
               <AiSummary device={device} />
             </div>
           </div>
-        </Panel>
-        <Panel className="p-5 lg:col-span-2">
-          <div className="label flex items-center gap-2 text-[11px] font-bold text-foreground">
-            <BrainCircuit className="size-4 text-accent" /> AI insight
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-foreground/90">{describeInsight(device)}</p>
-          {device.aiStatus === 'learning' && (
-            <div className="mt-3 h-1.5 overflow-hidden bg-line">
-              <div className="h-full bg-foreground transition-all" style={{ width: `${Math.round((device.aiProgress ?? 0) * 100)}%` }} />
-            </div>
-          )}
-        </Panel>
-      </div>
+        </FramedPanel>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
-        <h2 className="label text-xs font-bold text-foreground">[ Telemetry ]</h2>
-        <div className="flex gap-px bg-line" role="tablist" aria-label="Time range">
-          {RANGES.map((range) => (
-            <button
-              key={range.ms}
-              role="tab"
-              aria-selected={rangeMs === range.ms}
-              onClick={() => setRangeMs(range.ms)}
-              className={cx(
-                'label border-b-2 bg-panel px-3 py-1.5 text-[11px] font-bold transition-colors',
-                rangeMs === range.ms ? 'border-b-accent text-foreground' : 'border-b-transparent text-muted hover:text-foreground',
+        <div className="min-w-0 space-y-4">
+          <Panel className="p-5">
+            <div className="label flex items-center gap-2 text-[11px] font-bold text-foreground">
+              <BrainCircuit className="size-4 text-accent" /> AI insight
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-foreground/90">{describeInsight(device)}</p>
+            {device.aiStatus === 'learning' && (
+              <div className="mt-3 h-1.5 overflow-hidden bg-line">
+                <div className="h-full bg-foreground transition-all" style={{ width: `${Math.round((device.aiProgress ?? 0) * 100)}%` }} />
+              </div>
+            )}
+          </Panel>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+            <h2 className="label flex items-center gap-2 text-xs font-bold text-foreground">
+              [ Telemetry ]
+              {running && device.status === 'online' && (
+                <span className="label inline-flex items-center gap-1 text-[10px] font-bold text-accent">
+                  <span className="pulse-critical size-1.5 bg-accent" /> REC
+                </span>
               )}
-            >
-              {range.label}
-            </button>
-          ))}
+            </h2>
+            <div className="flex gap-px bg-line" role="tablist" aria-label="Time range">
+              {RANGES.map((range) => (
+                <button
+                  key={range.ms}
+                  role="tab"
+                  aria-selected={rangeMs === range.ms}
+                  onClick={() => setRangeMs(range.ms)}
+                  className={cx(
+                    'label border-b-2 bg-panel px-3 py-1.5 text-[11px] font-bold transition-colors',
+                    rangeMs === range.ms ? 'border-b-accent text-foreground' : 'border-b-transparent text-muted hover:text-foreground',
+                  )}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="lg:col-span-2">
+              <TelemetryChart
+                title="Vibration (RMS)"
+                unit="mm/s"
+                color={METRIC_INFO.vibration.color}
+                dataKey="vibration"
+                data={readings}
+                from={from}
+                to={windowEnd}
+                digits={2}
+                latest={latest?.vibration}
+                domain={[0, 'auto']}
+                tall
+                references={[
+                  { value: VIBRATION_WARNING, label: 'ISO warning 4.5', color: '#d9a441' },
+                  { value: VIBRATION_LIMIT, label: 'ISO limit 7.1', color: '#ff2a2a' },
+                ]}
+              />
+            </div>
+            <TelemetryChart
+              title="Temperature"
+              unit="°C"
+              color={METRIC_INFO.temperature.color}
+              dataKey="temperature"
+              data={readings}
+              from={from}
+              to={windowEnd}
+              latest={latest?.temperature}
+              references={[{ value: 85, label: 'Limit 85', color: '#ff2a2a' }]}
+            />
+            <TelemetryChart
+              title="Motor current"
+              unit="A"
+              color={METRIC_INFO.current.color}
+              dataKey="current"
+              data={readings}
+              from={from}
+              to={windowEnd}
+              latest={latest?.current}
+              domain={[0, 'auto']}
+            />
+            <TelemetryChart
+              title="AI anomaly score"
+              unit=""
+              color="#f472b6"
+              dataKey="anomalyScore"
+              data={readings}
+              from={from}
+              to={windowEnd}
+              digits={2}
+              latest={readings.findLast((reading) => reading.anomalyScore !== null)?.anomalyScore}
+              domain={[0, 1]}
+              references={[{ value: 0.5, label: 'Anomaly threshold', color: '#ff2a2a' }]}
+            />
+            {hasHumidity && (
+              <TelemetryChart
+                title="Ambient humidity"
+                unit="%"
+                color={METRIC_INFO.humidity.color}
+                dataKey="humidity"
+                data={readings}
+                from={from}
+                to={windowEnd}
+                digits={0}
+                latest={latest?.humidity}
+              />
+            )}
+          </div>
+
+          <Panel>
+            <PanelHeader title="Alert history" subtitle="Latest 20 alerts for this machine" />
+            {alerts.length === 0 ? (
+              <EmptyState title="No alerts recorded" />
+            ) : (
+              <ul>
+                {alerts.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} now={now} showDevice={false} onAcknowledge={acknowledge} />
+                ))}
+              </ul>
+            )}
+          </Panel>
         </div>
       </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <TelemetryChart
-          title="Vibration (RMS)"
-          unit="mm/s"
-          color={METRIC_INFO.vibration.color}
-          dataKey="vibration"
-          data={readings}
-          from={from}
-          to={windowEnd}
-          digits={2}
-          latest={latest?.vibration}
-          domain={[0, 'auto']}
-          references={[
-            { value: VIBRATION_WARNING, label: 'ISO warning 4.5', color: '#d9a441' },
-            { value: VIBRATION_LIMIT, label: 'ISO limit 7.1', color: '#ff2a2a' },
-          ]}
-        />
-        <TelemetryChart
-          title="Temperature"
-          unit="°C"
-          color={METRIC_INFO.temperature.color}
-          dataKey="temperature"
-          data={readings}
-          from={from}
-          to={windowEnd}
-          latest={latest?.temperature}
-          references={[{ value: 85, label: 'Limit 85', color: '#ff2a2a' }]}
-        />
-        <TelemetryChart
-          title="Motor current"
-          unit="A"
-          color={METRIC_INFO.current.color}
-          dataKey="current"
-          data={readings}
-          from={from}
-          to={windowEnd}
-          latest={latest?.current}
-          domain={[0, 'auto']}
-        />
-        <TelemetryChart
-          title="AI anomaly score"
-          unit=""
-          color="#f472b6"
-          dataKey="anomalyScore"
-          data={readings}
-          from={from}
-          to={windowEnd}
-          digits={2}
-          latest={readings.findLast((reading) => reading.anomalyScore !== null)?.anomalyScore}
-          domain={[0, 1]}
-          references={[{ value: 0.5, label: 'Anomaly threshold', color: '#ff2a2a' }]}
-        />
-        {hasHumidity && (
-          <TelemetryChart
-            title="Ambient humidity"
-            unit="%"
-            color={METRIC_INFO.humidity.color}
-            dataKey="humidity"
-            data={readings}
-            from={from}
-            to={windowEnd}
-            digits={0}
-            latest={latest?.humidity}
-          />
-        )}
-      </div>
-
-      <Panel>
-        <PanelHeader title="Alert history" subtitle="Latest 20 alerts for this machine" />
-        {alerts.length === 0 ? (
-          <EmptyState title="No alerts recorded" />
-        ) : (
-          <ul>
-            {alerts.map((alert) => (
-              <AlertRow key={alert.id} alert={alert} now={now} showDevice={false} onAcknowledge={acknowledge} />
-            ))}
-          </ul>
-        )}
-      </Panel>
 
       <EditDeviceModal device={device} open={editing} onClose={() => setEditing(false)} />
     </div>

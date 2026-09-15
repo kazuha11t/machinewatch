@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BellOff, CheckCheck } from 'lucide-react';
 import { AlertRow } from '../components/AlertRow';
-import { Button, EmptyState, ErrorBanner, Panel, cx } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, FramedPanel, cx } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import { useLive, useNow } from '../lib/live';
 import type { Alert, AlertState } from '../lib/types';
@@ -13,7 +13,7 @@ const TABS: { state: AlertState; label: string }[] = [
 ];
 
 export function AlertsPage() {
-  const { devices, alertsVersion } = useLive();
+  const { devices, overview, alertsVersion } = useLive();
   const now = useNow(5000);
   const [state, setState] = useState<AlertState>('open');
   const [deviceId, setDeviceId] = useState('');
@@ -99,19 +99,47 @@ export function AlertsPage() {
 
       <ErrorBanner message={error} />
 
-      <Panel>
-        {alerts === null ? (
-          <EmptyState title="Loading alerts…" />
-        ) : alerts.length === 0 ? (
-          <EmptyState icon={<BellOff className="size-8" />} title={state === 'open' ? 'No open alerts' : 'No alerts found'} />
-        ) : (
-          <ul>
-            {alerts.map((alert) => (
-              <AlertRow key={alert.id} alert={alert} deviceName={devices[alert.deviceId]?.name} now={now} onAcknowledge={acknowledge} />
-            ))}
-          </ul>
-        )}
-      </Panel>
+      <div className="grid gap-4 sm:grid-cols-[8rem_1fr]">
+        <div className="flex sm:flex-col gap-px border border-line bg-line">
+          <SeverityStat label="Open" value={overview?.alerts.open} />
+          <SeverityStat label="Critical" value={overview?.alerts.critical} tone="bad" />
+          <SeverityStat
+            label="Warning"
+            value={overview && overview.alerts.open >= overview.alerts.critical ? overview.alerts.open - overview.alerts.critical : undefined}
+          />
+        </div>
+
+        <FramedPanel>
+          {alerts === null ? (
+            <EmptyState title="Loading alerts…" />
+          ) : alerts.length === 0 ? (
+            <EmptyState icon={<BellOff className="size-8" />} title={state === 'open' ? 'No open alerts' : 'No alerts found'} />
+          ) : (
+            <ul>
+              {alerts.map((alert, index) => (
+                <AlertRow
+                  key={alert.id}
+                  alert={alert}
+                  deviceName={devices[alert.deviceId]?.name}
+                  now={now}
+                  onAcknowledge={acknowledge}
+                  className={cx('rise-in', alert.severity === 'critical' && alert.acknowledgedAt === null && 'border-l-2 border-l-accent pulse-critical')}
+                  style={{ animationDelay: `${Math.min(index, 10) * 30}ms` }}
+                />
+              ))}
+            </ul>
+          )}
+        </FramedPanel>
+      </div>
+    </div>
+  );
+}
+
+function SeverityStat({ label, value, tone }: { label: string; value?: number; tone?: 'bad' }) {
+  return (
+    <div className="flex-1 bg-panel px-3 py-2.5 sm:py-3">
+      <p className="label text-[9px] text-muted">{label}</p>
+      <p className={cx('tabular font-mono text-2xl font-bold', tone === 'bad' && value ? 'text-accent' : 'text-foreground')}>{value ?? '—'}</p>
     </div>
   );
 }

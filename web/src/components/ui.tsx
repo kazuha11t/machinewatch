@@ -1,4 +1,4 @@
-import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { HEALTH_STYLES, SEVERITY_STYLES } from '../lib/format';
 import type { DeviceStatus, HealthStatus, Severity } from '../lib/types';
@@ -9,6 +9,89 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
   return <section className={cx('border border-line bg-panel', className)}>{children}</section>;
+}
+
+/** Corner-bracket framing device — HUD-style depth cue without shadows or radius. */
+export function Bracket({ tone = 'muted' }: { tone?: 'muted' | 'accent' }) {
+  const color = tone === 'accent' ? 'border-accent' : 'border-line';
+  return (
+    <>
+      <span className={cx('pointer-events-none absolute -top-px -left-px size-2.5 border-t-2 border-l-2', color)} />
+      <span className={cx('pointer-events-none absolute -top-px -right-px size-2.5 border-t-2 border-r-2', color)} />
+      <span className={cx('pointer-events-none absolute -bottom-px -left-px size-2.5 border-b-2 border-l-2', color)} />
+      <span className={cx('pointer-events-none absolute -bottom-px -right-px size-2.5 border-b-2 border-r-2', color)} />
+    </>
+  );
+}
+
+/** Panel + corner brackets, for the primary "hero" panels on each page. */
+export function FramedPanel({ children, className, tone }: { children: ReactNode; className?: string; tone?: 'muted' | 'accent' }) {
+  return (
+    <section className={cx('relative border border-line bg-panel', className)}>
+      <Bracket tone={tone} />
+      {children}
+    </section>
+  );
+}
+
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  return reduced;
+}
+
+/** Animated numeral readout for realtime KPIs — counts from its previous value instead of snapping. */
+export function CountUp({ value, decimals = 0 }: { value: number | null; decimals?: number }) {
+  const reduced = usePrefersReducedMotion();
+  const [display, setDisplay] = useState(value ?? 0);
+  const prev = useRef(value ?? 0);
+
+  useEffect(() => {
+    if (value === null) return;
+    const from = prev.current;
+    const to = value;
+    prev.current = value;
+    if (from === to) return;
+    if (reduced) {
+      setDisplay(to);
+      return;
+    }
+    const duration = 500;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      setDisplay(from + (to - from) * eased);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, reduced]);
+
+  if (value === null) return <>—</>;
+  return <>{display.toFixed(decimals)}</>;
+}
+
+/** Single-line scrolling ticker for critical events — capped to one per page per the design system. */
+export function Marquee({ items }: { items: ReactNode[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="overflow-hidden border-b border-accent/40 bg-accent/10">
+      <div className="marquee-track flex w-max items-center gap-10 py-1.5 whitespace-nowrap">
+        {[...items, ...items].map((item, index) => (
+          <span key={index} className="label flex items-center gap-2 text-[10px] font-bold text-accent">
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function PanelHeader({ title, subtitle, action }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode }) {

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BellRing, BrainCircuit, Cpu, HeartPulse, PowerOff, TrendingUp } from 'lucide-react';
+import { BellRing, BrainCircuit, Cpu, PowerOff, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
-import { EmptyState, HealthMeter, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
+import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
 import { api } from '../lib/api';
 import { METRIC_INFO, formatClock, formatHours, formatValue, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -22,6 +22,7 @@ export function OverviewPage() {
 
   const list = useMemo(() => Object.values(devices).sort((a, b) => a.name.localeCompare(b.name)), [devices]);
   const aiReady = list.filter((device) => device.aiStatus === 'ready').length;
+  const criticalAlerts = useMemo(() => alerts.filter((alert) => alert.severity === 'critical'), [alerts]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -39,17 +40,30 @@ export function OverviewPage() {
         <p className="label mt-3 text-[10px] text-muted">Live condition of every connected machine.</p>
       </header>
 
-      <div className="grid grid-cols-2 gap-px border border-line bg-line lg:grid-cols-4">
-        <Kpi icon={Cpu} label="Machines online" value={overview ? `${overview.devices.online}/${overview.devices.total}` : '—'} />
+      <Marquee
+        items={criticalAlerts.map((alert) => (
+          <span key={alert.id}>
+            CRITICAL · {devices[alert.deviceId]?.name ?? alert.deviceId} — {alert.message}
+          </span>
+        ))}
+      />
+
+      <div className="grid gap-px border border-line bg-line lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="bg-panel p-4">
+          <p className="label text-[10px] text-muted">Average health</p>
+          <p className="font-display mt-1 text-6xl leading-none sm:text-7xl">
+            {overview?.averageHealth == null ? '—' : <CountUp value={Math.round(overview.averageHealth)} />}
+          </p>
+        </div>
+        <Kpi icon={Cpu} label="Machines online" value={overview?.devices.online} suffix={overview ? `/${overview.devices.total}` : ''} />
         <Kpi
           icon={BellRing}
           label="Open alerts"
-          value={overview?.alerts.open ?? '—'}
+          value={overview?.alerts.open}
           hint={overview?.alerts.critical ? `${overview.alerts.critical} critical` : undefined}
           tone={overview?.alerts.critical ? 'bad' : undefined}
         />
-        <Kpi icon={HeartPulse} label="Average health" value={overview?.averageHealth == null ? '—' : Math.round(overview.averageHealth)} />
-        <Kpi icon={BrainCircuit} label="AI models ready" value={list.length ? `${aiReady}/${list.length}` : '—'} />
+        <Kpi icon={BrainCircuit} label="AI models ready" value={list.length ? aiReady : undefined} suffix={list.length ? `/${list.length}` : ''} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
@@ -62,8 +76,8 @@ export function OverviewPage() {
             </Panel>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {list.map((device) => (
-                <MachineCard key={device.id} device={device} reading={latest[device.id]} history={recent[device.id] ?? []} now={now} />
+              {list.map((device, index) => (
+                <MachineCard key={device.id} device={device} reading={latest[device.id]} history={recent[device.id] ?? []} now={now} index={index} />
               ))}
             </div>
           )}
@@ -86,20 +100,37 @@ export function OverviewPage() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, hint, tone }: { icon: typeof Cpu; label: string; value: string | number; hint?: string; tone?: 'bad' }) {
+function Kpi({
+  icon: Icon,
+  label,
+  value,
+  suffix = '',
+  hint,
+  tone,
+}: {
+  icon: typeof Cpu;
+  label: string;
+  value: number | undefined;
+  suffix?: string;
+  hint?: string;
+  tone?: 'bad';
+}) {
   return (
     <div className="bg-panel p-4">
       <div className="label flex items-center justify-between text-[10px] text-muted">
         {label}
         <Icon className="size-3.5" />
       </div>
-      <p className="tabular mt-2 font-mono text-3xl font-bold text-foreground">{value}</p>
+      <p className="tabular mt-2 font-mono text-3xl font-bold text-foreground">
+        {value === undefined ? '—' : <CountUp value={value} />}
+        {value !== undefined && suffix}
+      </p>
       {hint && <p className={cx('label mt-1 text-[10px]', tone === 'bad' ? 'text-accent' : 'text-muted')}>{hint}</p>}
     </div>
   );
 }
 
-function MachineCard({ device, reading, history, now }: { device: Device; reading?: Reading; history: Reading[]; now: number }) {
+function MachineCard({ device, reading, history, now, index }: { device: Device; reading?: Reading; history: Reading[]; now: number; index: number }) {
   const vibration = history.map((point) => point.vibration).filter((value): value is number => value !== null);
   const stopped = device.relayState === false || reading?.running === false;
   const offline = device.status === 'offline';
@@ -108,8 +139,14 @@ function MachineCard({ device, reading, history, now }: { device: Device; readin
   return (
     <Link
       to={`/devices/${device.id}`}
-      className={cx('group block border bg-panel p-4 transition-colors', critical ? 'border-accent/50 hover:border-accent' : 'border-line hover:border-foreground')}
+      className={cx(
+        'group rise-in relative block overflow-hidden border bg-panel p-4 transition-colors',
+        critical ? 'pulse-critical border-accent/50 hover:border-accent' : 'border-line hover:border-foreground',
+      )}
+      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
     >
+      <Bracket tone={critical ? 'accent' : 'muted'} />
+      <span className="scan-sweep pointer-events-none absolute inset-x-0 top-0 h-px bg-foreground/60" aria-hidden />
       <div className="flex items-start justify-between gap-3 border-b border-line pb-3">
         <div className="min-w-0">
           <p className="label text-[10px] text-muted">Unit / {device.id}</p>

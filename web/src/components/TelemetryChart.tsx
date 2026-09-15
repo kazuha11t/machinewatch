@@ -21,9 +21,11 @@ interface TelemetryChartProps {
   references?: ChartReference[];
   domain?: [number | 'auto' | 'dataMin' | 'dataMax', number | 'auto' | 'dataMax'];
   latest?: number | null;
+  /** Hero treatment for the metric that drives the page's headline forecast — taller plot area. */
+  tall?: boolean;
 }
 
-export function TelemetryChart({ title, unit, color, dataKey, data, from, to, digits = 1, references = [], domain, latest }: TelemetryChartProps) {
+export function TelemetryChart({ title, unit, color, dataKey, data, from, to, digits = 1, references = [], domain, latest, tall }: TelemetryChartProps) {
   const spanMs = to - from;
   const tickFormatter = (ts: number) =>
     spanMs > 6 * 3_600_000
@@ -39,7 +41,7 @@ export function TelemetryChart({ title, unit, color, dataKey, data, from, to, di
           <span className="ml-1 text-xs font-normal text-muted">{unit}</span>
         </p>
       </div>
-      <div className="h-48">
+      <div className={tall ? 'h-64 lg:h-80' : 'h-48'}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -12 }}>
             <CartesianGrid stroke="#2b2b2b" strokeDasharray="3 3" vertical={false} />

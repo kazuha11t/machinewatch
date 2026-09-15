@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Activity, BrainCircuit, Cpu, RadioTower } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
-import { Button, ErrorBanner, Field, inputClass } from '../components/ui';
+import { Bracket, Button, cx, ErrorBanner, Field, inputClass } from '../components/ui';
 import { errorMessage } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
@@ -38,7 +38,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen lg:grid-cols-[3fr_2fr]">
       <div
         className="relative hidden overflow-hidden border-r border-line bg-panel p-12 lg:flex lg:flex-col"
         style={{
@@ -52,26 +52,34 @@ export function LoginPage() {
             <Activity className="size-5" strokeWidth={2.5} />
           </div>
           <span className="font-display text-lg">MachineWatch</span>
+          <span className="label ml-auto text-[10px] text-muted">UNIT-CTRL/01</span>
         </div>
         <div className="relative my-auto max-w-lg bg-panel/80 py-2">
-          <h1 className="font-display text-4xl sm:text-5xl">
-            Catch machine failures <span className="text-accent">hours before</span> they stop your line.
-          </h1>
-          <ul className="mt-10 space-y-6">
-            {HIGHLIGHTS.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex gap-4">
-                <div className="grid size-10 shrink-0 place-items-center border border-line bg-panel-raised text-accent">
-                  <Icon className="size-5" />
-                </div>
-                <div>
-                  <p className="label text-xs font-bold text-foreground">{title}</p>
+          <div className="relative border border-line p-6">
+            <Bracket tone="accent" />
+            <h1 className="font-display text-4xl sm:text-5xl">
+              Catch machine failures <span className="text-accent">hours before</span> they stop your line.
+            </h1>
+          </div>
+          <ul className="mt-10 space-y-3">
+            {HIGHLIGHTS.map(({ icon: Icon, title, text }, index) => (
+              <li key={title} className="rise-in flex items-start gap-3" style={{ animationDelay: `${index * 150}ms` }}>
+                <span className={cx('mt-1.5 size-1.5 shrink-0', index === 0 && 'pulse-critical bg-live', index !== 0 && 'bg-muted')} />
+                <div className="min-w-0 flex-1">
+                  <div className="label flex items-baseline gap-2 text-[10px] font-bold text-foreground">
+                    <Icon className="size-3.5 shrink-0 text-accent" />
+                    <span className="shrink-0">{title}</span>
+                    <span className="min-w-0 flex-1 overflow-hidden text-muted" aria-hidden>
+                      {'.'.repeat(40)}
+                    </span>
+                  </div>
                   <p className="mt-0.5 text-sm text-muted">{text}</p>
                 </div>
               </li>
             ))}
           </ul>
         </div>
-        <p className="label relative text-[10px] text-muted">ESP32 / MQTT / Node.js / Python / React / React Native</p>
+        <p className="label relative text-[10px] text-muted">ESP32 / MQTT / Node.js / Python / React / React Native — REV 2.6</p>
       </div>
 
       <div className="flex items-center justify-center px-4 py-12">

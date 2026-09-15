@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, EmptyState, ErrorBanner, Field, Modal, Panel, SeverityBadge, cx, inputClass } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, Field, FramedPanel, Modal, SeverityBadge, cx, inputClass } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import { METRICS, METRIC_INFO } from '../lib/format';
 import { useLive } from '../lib/live';
@@ -40,14 +40,22 @@ export function RulesPage() {
             Fixed thresholds complement the AI model: they catch hard limits, the AI catches subtle drift.
           </p>
         </div>
-        <Button variant="primary" onClick={() => setCreating(true)}>
-          <Plus className="size-4" /> New rule
-        </Button>
+        <div className="flex flex-wrap items-center gap-4">
+          {rules && (
+            <p className="label text-right text-[10px] text-muted">
+              RULES ACTIVE: <span className="tabular font-bold text-foreground">{rules.filter((rule) => rule.enabled).length}</span>
+              {'  '}ALL: <span className="tabular font-bold text-foreground">{rules.length}</span>
+            </p>
+          )}
+          <Button variant="primary" onClick={() => setCreating(true)}>
+            <Plus className="size-4" /> New rule
+          </Button>
+        </div>
       </header>
 
       <ErrorBanner message={error} />
 
-      <Panel>
+      <FramedPanel>
         {rules === null ? (
           <EmptyState title="Loading rules…" />
         ) : rules.length === 0 ? (
@@ -98,7 +106,7 @@ export function RulesPage() {
             </table>
           </div>
         )}
-      </Panel>
+      </FramedPanel>
 
       <CreateRuleModal
         open={creating}

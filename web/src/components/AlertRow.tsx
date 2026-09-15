@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { BrainCircuit, Check, Gauge, WifiOff } from 'lucide-react';
 import { Link } from 'react-router';
 import { SEVERITY_STYLES, formatDateTime, timeAgo } from '../lib/format';
@@ -22,19 +23,23 @@ export function AlertRow({
   now,
   onAcknowledge,
   showDevice = true,
+  className,
+  style: rootStyle,
 }: {
   alert: Alert;
   deviceName?: string;
   now: number;
   onAcknowledge?: (alert: Alert) => void;
   showDevice?: boolean;
+  className?: string;
+  style?: CSSProperties;
 }) {
   const Icon = KIND_ICONS[alert.kind];
   const style = SEVERITY_STYLES[alert.severity];
   const acknowledged = alert.acknowledgedAt !== null;
 
   return (
-    <li className={cx('flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0', acknowledged && 'opacity-50')}>
+    <li className={cx('flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0', acknowledged && 'opacity-50', className)} style={rootStyle}>
       <div className={cx('mt-0.5 grid size-8 shrink-0 place-items-center border', style.bg, style.text, style.border)}>
         <Icon className="size-4" />
       </div>
