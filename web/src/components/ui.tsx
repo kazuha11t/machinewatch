@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { useEffect, type ButtonHTMLAttributes, type MouseEvent, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { HEALTH_STYLES, SEVERITY_STYLES } from '../lib/format';
 import type { DeviceStatus, HealthStatus, Severity } from '../lib/types';
 
@@ -34,48 +35,51 @@ export function FramedPanel({ children, className, tone }: { children: ReactNode
   );
 }
 
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onChange = () => setReduced(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, []);
-  return reduced;
-}
-
-/** Animated numeral readout for realtime KPIs — counts from its previous value instead of snapping. */
+/** Animated numeral readout for realtime KPIs — springs toward its new value instead of snapping. */
 export function CountUp({ value, decimals = 0 }: { value: number | null; decimals?: number }) {
-  const reduced = usePrefersReducedMotion();
-  const [display, setDisplay] = useState(value ?? 0);
-  const prev = useRef(value ?? 0);
+  const reduced = useReducedMotion();
+  const motionValue = useMotionValue(value ?? 0);
+  const spring = useSpring(motionValue, reduced ? { stiffness: 1000, damping: 100 } : { stiffness: 140, damping: 20, mass: 0.4 });
+  const display = useTransform(spring, (latest) => latest.toFixed(decimals));
 
   useEffect(() => {
-    if (value === null) return;
-    const from = prev.current;
-    const to = value;
-    prev.current = value;
-    if (from === to) return;
-    if (reduced) {
-      setDisplay(to);
-      return;
-    }
-    const duration = 500;
-    const start = performance.now();
-    let raf = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - (1 - t) ** 3;
-      setDisplay(from + (to - from) * eased);
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, reduced]);
+    if (value !== null) motionValue.set(value);
+  }, [value, motionValue]);
 
   if (value === null) return <>—</>;
-  return <>{display.toFixed(decimals)}</>;
+  return <motion.span>{display}</motion.span>;
+}
+
+/**
+ * Pointer-following 3D tilt, capped at `maxDeg`. Disabled under reduced motion and on coarse
+ * (touch) pointers, where the concept doesn't apply — spread the handlers onto the target element.
+ */
+export function useTilt(maxDeg = 6) {
+  const reduced = useReducedMotion();
+  const coarse = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+  const enabled = !reduced && !coarse;
+
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+  const springX = useSpring(rotateX, { stiffness: 220, damping: 22 });
+  const springY = useSpring(rotateY, { stiffness: 220, damping: 22 });
+
+  if (!enabled) return {};
+
+  return {
+    style: { rotateX: springX, rotateY: springY, transformPerspective: 800 },
+    onMouseMove: (event: MouseEvent<HTMLElement>) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const px = (event.clientX - rect.left) / rect.width - 0.5;
+      const py = (event.clientY - rect.top) / rect.height - 0.5;
+      rotateY.set(px * maxDeg * 2);
+      rotateX.set(py * -maxDeg * 2);
+    },
+    onMouseLeave: () => {
+      rotateX.set(0);
+      rotateY.set(0);
+    },
+  };
 }
 
 /** Single-line scrolling ticker for critical events — capped to one per page per the design system. */

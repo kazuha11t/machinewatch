@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BellRing, BrainCircuit, Cpu, PowerOff, TrendingUp } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
 import { FactoryFloor } from '../components/factory-floor/FactoryFloor';
-import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, Sparkline, StatusBadge, cx } from '../components/ui';
+import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, Sparkline, StatusBadge, cx, useTilt } from '../components/ui';
 import { api } from '../lib/api';
 import { METRIC_INFO, formatClock, formatHours, formatValue, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -11,6 +12,11 @@ import type { Alert, Device, Metric, Reading } from '../lib/types';
 
 const CARD_METRICS: Metric[] = ['temperature', 'vibration', 'current'];
 const SPARK_COLOR = '#9a9a9a';
+const MotionLink = motion.create(Link);
+
+// Stagger orchestration for the KPI row and device grid — children opt in with `variants={ITEM}`.
+const STAGGER_GROUP = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
+const STAGGER_ITEM = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } } };
 
 export function OverviewPage() {
   const { devices, devicesLoaded, latest, recent, overview, alertsVersion } = useLive();
@@ -51,13 +57,18 @@ export function OverviewPage() {
 
       <FactoryFloor devices={list} latest={latest} now={now} />
 
-      <div className="grid gap-px border border-line bg-line lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="bg-panel p-4">
+      <motion.div
+        variants={STAGGER_GROUP}
+        initial="hidden"
+        animate="show"
+        className="grid gap-px border border-line bg-line lg:grid-cols-[1.4fr_1fr_1fr_1fr]"
+      >
+        <motion.div variants={STAGGER_ITEM} className="bg-panel p-4">
           <p className="label text-[10px] text-muted">Average health</p>
           <p className="font-display mt-1 text-6xl leading-none sm:text-7xl">
             {overview?.averageHealth == null ? '—' : <CountUp value={Math.round(overview.averageHealth)} />}
           </p>
-        </div>
+        </motion.div>
         <Kpi icon={Cpu} label="Machines online" value={overview?.devices.online} suffix={overview ? `/${overview.devices.total}` : ''} />
         <Kpi
           icon={BellRing}
@@ -67,7 +78,7 @@ export function OverviewPage() {
           tone={overview?.alerts.critical ? 'bad' : undefined}
         />
         <Kpi icon={BrainCircuit} label="AI models ready" value={list.length ? aiReady : undefined} suffix={list.length ? `/${list.length}` : ''} />
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_22rem]">
         <section>
@@ -78,11 +89,11 @@ export function OverviewPage() {
               </EmptyState>
             </Panel>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {list.map((device, index) => (
-                <MachineCard key={device.id} device={device} reading={latest[device.id]} history={recent[device.id] ?? []} now={now} index={index} />
+            <motion.div variants={STAGGER_GROUP} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-2">
+              {list.map((device) => (
+                <MachineCard key={device.id} device={device} reading={latest[device.id]} history={recent[device.id] ?? []} now={now} />
               ))}
-            </div>
+            </motion.div>
           )}
         </section>
 
@@ -92,9 +103,11 @@ export function OverviewPage() {
             <EmptyState title="All clear">No open alerts right now.</EmptyState>
           ) : (
             <ul>
-              {alerts.map((alert) => (
-                <AlertRow key={alert.id} alert={alert} deviceName={devices[alert.deviceId]?.name} now={now} />
-              ))}
+              <AnimatePresence initial={false}>
+                {alerts.map((alert) => (
+                  <AlertRow key={alert.id} alert={alert} deviceName={devices[alert.deviceId]?.name} now={now} />
+                ))}
+              </AnimatePresence>
             </ul>
           )}
         </Panel>
@@ -119,7 +132,7 @@ function Kpi({
   tone?: 'bad';
 }) {
   return (
-    <div className="bg-panel p-4">
+    <motion.div variants={STAGGER_ITEM} className="bg-panel p-4">
       <div className="label flex items-center justify-between text-[10px] text-muted">
         {label}
         <Icon className="size-3.5" />
@@ -129,24 +142,26 @@ function Kpi({
         {value !== undefined && suffix}
       </p>
       {hint && <p className={cx('label mt-1 text-[10px]', tone === 'bad' ? 'text-accent' : 'text-muted')}>{hint}</p>}
-    </div>
+    </motion.div>
   );
 }
 
-function MachineCard({ device, reading, history, now, index }: { device: Device; reading?: Reading; history: Reading[]; now: number; index: number }) {
+function MachineCard({ device, reading, history, now }: { device: Device; reading?: Reading; history: Reading[]; now: number }) {
   const vibration = history.map((point) => point.vibration).filter((value): value is number => value !== null);
   const stopped = device.relayState === false || reading?.running === false;
   const offline = device.status === 'offline';
   const critical = device.healthStatus === 'critical' && !offline;
+  const tilt = useTilt(6);
 
   return (
-    <Link
+    <MotionLink
       to={`/devices/${device.id}`}
+      variants={STAGGER_ITEM}
+      {...tilt}
       className={cx(
-        'group rise-in relative block overflow-hidden border bg-panel p-4 transition-colors',
+        'group relative block overflow-hidden border bg-panel p-4 transition-colors',
         critical ? 'pulse-critical border-accent/50 hover:border-accent' : 'border-line hover:border-foreground',
       )}
-      style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
     >
       <Bracket tone={critical ? 'accent' : 'muted'} />
       <span className="scan-sweep pointer-events-none absolute inset-x-0 top-0 h-px bg-foreground/60" aria-hidden />
@@ -186,7 +201,7 @@ function MachineCard({ device, reading, history, now, index }: { device: Device;
         <AiSummary device={device} />
         <span className="label shrink-0 text-[10px] text-muted">{timeAgo(device.lastSeen === null ? null : Math.max(device.lastSeen, reading?.ts ?? 0), now)}</span>
       </div>
-    </Link>
+    </MotionLink>
   );
 }
 

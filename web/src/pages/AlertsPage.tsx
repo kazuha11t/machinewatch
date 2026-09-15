@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BellOff, CheckCheck } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { AlertRow } from '../components/AlertRow';
 import { Button, EmptyState, ErrorBanner, FramedPanel, cx } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
@@ -116,17 +117,18 @@ export function AlertsPage() {
             <EmptyState icon={<BellOff className="size-8" />} title={state === 'open' ? 'No open alerts' : 'No alerts found'} />
           ) : (
             <ul>
-              {alerts.map((alert, index) => (
-                <AlertRow
-                  key={alert.id}
-                  alert={alert}
-                  deviceName={devices[alert.deviceId]?.name}
-                  now={now}
-                  onAcknowledge={acknowledge}
-                  className={cx('rise-in', alert.severity === 'critical' && alert.acknowledgedAt === null && 'border-l-2 border-l-accent pulse-critical')}
-                  style={{ animationDelay: `${Math.min(index, 10) * 30}ms` }}
-                />
-              ))}
+              <AnimatePresence initial={false}>
+                {alerts.map((alert) => (
+                  <AlertRow
+                    key={alert.id}
+                    alert={alert}
+                    deviceName={devices[alert.deviceId]?.name}
+                    now={now}
+                    onAcknowledge={acknowledge}
+                    className={cx(alert.severity === 'critical' && alert.acknowledgedAt === null && 'border-l-2 border-l-accent pulse-critical')}
+                  />
+                ))}
+              </AnimatePresence>
             </ul>
           )}
         </FramedPanel>

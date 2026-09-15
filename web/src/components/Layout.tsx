@@ -1,5 +1,6 @@
 import { Activity, BellRing, LayoutDashboard, LogOut, SlidersHorizontal } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { NavLink, Outlet, useLocation } from 'react-router';
 import { useAuth } from '../lib/auth';
 import { useLive } from '../lib/live';
 import { Toasts } from './Toasts';
@@ -15,6 +16,8 @@ export function Layout() {
   const { user, logout } = useAuth();
   const { connected, overview } = useLive();
   const openAlerts = overview?.alerts.open ?? 0;
+  const location = useLocation();
+  const reducedMotion = useReducedMotion();
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -69,7 +72,16 @@ export function Layout() {
       </aside>
 
       <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
-        <Outlet />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={reducedMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.16, ease: [0.16, 1, 0.3, 1] } }}
+            exit={reducedMotion ? undefined : { opacity: 0, transition: { duration: 0.1 } }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
       </main>
       <Toasts />
     </div>
