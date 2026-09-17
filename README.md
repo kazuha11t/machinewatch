@@ -81,21 +81,26 @@ most common reason this fails on a machine that isn't the one it was developed o
   backend file rather than a clear version message.
 - `python --version` (or `python3 --version` on macOS/Linux) must print 3.11+.
 
-Run each command on its own line rather than chaining with `&&` — Windows PowerShell, the default shell on
-most Windows machines, doesn't support it and errors out immediately.
+You'll run 4 services at once, each in its **own terminal window** that stays open — they don't exit, they
+just sit there logging. Open 4 terminals now and run one block in each. Never chain steps with `&&`: Windows
+PowerShell, the default shell on most Windows machines, doesn't support it and errors out immediately — run
+each line on its own.
+
+### Terminal 1 — AI service
 
 ```bash
-# 1. AI service — create and use a virtual environment
 python -m venv .venv
 ```
 
-Activate it for your shell, then install and run:
+Activate it for your shell:
 
 | Shell | Activate with |
 | --- | --- |
 | macOS/Linux | `source .venv/bin/activate` |
 | Windows PowerShell | `.venv\Scripts\Activate.ps1` (if blocked, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then retry) |
 | Windows cmd.exe | `.venv\Scripts\activate.bat` |
+
+You should see `(.venv)` appear at the start of your prompt. Then, in that same terminal:
 
 ```bash
 pip install -r ai-service/requirements-dev.txt -r simulator/requirements.txt
@@ -104,36 +109,70 @@ python -m uvicorn app.main:app --port 8000
 ```
 
 Run it as `python -m uvicorn`, not bare `uvicorn` — if the venv's `Scripts`/`bin` folder isn't on `PATH` (a common
-issue on Windows even after activating), the bare command fails with "not recognized" even though the package
-installed fine; `python -m` always finds it through the active Python instead.
+issue on Windows even after activating), the bare command fails with "'uvicorn' is not recognized" even though
+the package installed fine; `python -m` always finds it through the active Python instead. If you still get
+"No module named uvicorn", the install above ran outside this venv — re-run `pip install` in this same
+activated terminal and check with `pip show uvicorn`.
+
+Leave this running. You're ready for the next step once it prints `Uvicorn running on http://127.0.0.1:8000`.
+
+### Terminal 2 — Backend with an embedded MQTT broker
 
 ```bash
-# 2. Backend with an embedded MQTT broker (new terminal)
 cd backend
 npm install
 ```
 
-Create `backend/.env` containing one line, `EMBEDDED_BROKER=true` — the backend loads it automatically, so
-the run command below stays identical on every shell instead of needing an inline env var:
+Create a file named `backend/.env` containing exactly one line:
+
+```
+EMBEDDED_BROKER=true
+```
+
+The backend loads it automatically, so `npm run dev` below never needs an inline environment variable — that
+keeps this step identical on every shell. The easiest way to create it without a shell fighting you over
+quoting is a plain text editor:
+
+```bash
+notepad .env
+```
+
+(macOS/Linux: `nano .env` or any editor.) Say yes to creating a new file, type the line above, save, close.
+If you'd rather use PowerShell, type the command yourself instead of pasting it — copy-pasting from a chat or
+browser often turns straight quotes `"` into curly ones `“ ”`, which PowerShell can't parse:
+
+```powershell
+Set-Content -Path .env -Value 'EMBEDDED_BROKER=true'
+```
+
+Then start the backend:
 
 ```bash
 npm run dev
 ```
 
+Leave this running. You're ready once you see it listening on port 4000.
+
+### Terminal 3 — Simulated fleet (5x speed so faults develop within minutes)
+
 ```bash
-# 3. Simulated fleet (new terminal): 5x speed so faults develop within minutes
 cd simulator
 python simulator.py --interval 0.2 --speed 5
 ```
 
+This needs the same Python packages as the AI service. If `python` can't find them (`ModuleNotFoundError`),
+activate the same `.venv` from Terminal 1 in this window too — a venv activation only applies to the terminal
+it was run in, not every window you open.
+
+### Terminal 4 — Dashboard
+
 ```bash
-# 4. Dashboard (new terminal)
 cd web
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173 and sign in with `demo@machinewatch.io` / `demo1234`.
+Leave this running, then open **http://localhost:5173** and sign in with `demo@machinewatch.io` / `demo1234`.
 
 After about a minute every model finishes learning. A little later *Air Compressor #2* starts developing bearing
 wear. Watch the AI health score drop and the vibration forecast appear before the 4.5 mm/s warning rule fires.
