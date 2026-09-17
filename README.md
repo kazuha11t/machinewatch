@@ -69,6 +69,11 @@ scripts/     Tooling, e.g. automated screenshot capture, Windows dev-server auto
 
 ## Quick start (no Docker)
 
+```bash
+git clone https://github.com/kazuha11t/machinewatch.git
+cd machinewatch
+```
+
 Requirements: Node.js 24+ and Python 3.11+ — check both *before* the steps below, since a mismatch is the
 most common reason this fails on a machine that isn't the one it was developed on:
 - `node --version` must print v24 or higher. The backend runs `.ts` files directly and uses the built-in
