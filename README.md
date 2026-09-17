@@ -69,7 +69,7 @@ scripts/     Tooling, e.g. automated screenshot capture, Windows dev-server auto
 
 ## Quick start (no Docker)
 
-```bash
+```
 git clone https://github.com/kazuha11t/machinewatch.git
 cd machinewatch
 ```
@@ -82,98 +82,120 @@ most common reason this fails on a machine that isn't the one it was developed o
 - `python --version` (or `python3 --version` on macOS/Linux) must print 3.11+.
 
 You'll run 4 services at once, each in its **own terminal window** that stays open — they don't exit, they
-just sit there logging. Open 4 terminals now and run one block in each. Never chain steps with `&&`: Windows
-PowerShell, the default shell on most Windows machines, doesn't support it and errors out immediately — run
-each line on its own.
+just sit there logging. Open 4 terminals now, and run one full block in each.
 
-### Terminal 1 — AI service
+**Pick one terminal type below and stick to it for all 4 windows** — don't paste a PowerShell command into
+Git Bash or vice versa; that's the single biggest source of "some commands work, some don't" confusion. On
+Windows, PowerShell is the one that opens when you right-click → "Open in Terminal" or search "PowerShell" in
+the Start menu; Git Bash is a separate app you'd have installed on purpose (it comes with Git for Windows).
+If you're not sure which you have open, run `echo $PSVersionTable` — real output means PowerShell, an error
+means it isn't.
 
-```bash
+<details>
+<summary><b>Windows — PowerShell</b> (click to expand)</summary>
+
+Terminal 1 — AI service:
+```powershell
 python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+If that's blocked with a "running scripts is disabled" error, run this once and retry:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+```
+You should see `(.venv)` at the start of your prompt. Then, in that same window:
+```powershell
+pip install -r ai-service/requirements-dev.txt -r simulator/requirements.txt
+cd ai-service
+python -m uvicorn app.main:app --port 8000
+```
+Leave this running — wait for `Uvicorn running on http://127.0.0.1:8000` before moving on.
+
+Terminal 2 — backend, **new window**:
+```powershell
+cd backend
+npm install
+```
+Create `backend\.env` with exactly one line. Type this yourself rather than pasting it — pasting from a chat
+or browser often turns straight quotes `"` into curly ones that PowerShell can't parse:
+```powershell
+Set-Content -Path .env -Value 'EMBEDDED_BROKER=true'
+```
+Then:
+```powershell
+npm run dev
+```
+Leave this running — wait until you see it listening on port 4000.
+
+Terminal 3 — simulator, **new window**:
+```powershell
+.venv\Scripts\Activate.ps1
+cd simulator
+python simulator.py --interval 0.2 --speed 5
+```
+(Activation only applies to the window you run it in — that's why this repeats it.)
+
+Terminal 4 — dashboard, **new window**:
+```powershell
+cd web
+npm install
+npm run dev
 ```
 
-Activate it for your shell:
+</details>
 
-| Shell | Activate with |
-| --- | --- |
-| macOS/Linux | `source .venv/bin/activate` |
-| Windows PowerShell | `.venv\Scripts\Activate.ps1` (if blocked, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then retry) |
-| Windows cmd.exe | `.venv\Scripts\activate.bat` |
-| Windows Git Bash | `source .venv/Scripts/activate` — note it's `Scripts`, not `bin`, even though the command is the Unix-style `source` |
+<details>
+<summary><b>macOS / Linux / Git Bash</b> (click to expand)</summary>
 
-You should see `(.venv)` appear at the start of your prompt. Then, in that same terminal:
-
+Terminal 1 — AI service:
+```bash
+python -m venv .venv
+source .venv/bin/activate      # Windows Git Bash: source .venv/Scripts/activate
+```
+You should see `(.venv)` at the start of your prompt. Then, in that same window:
 ```bash
 pip install -r ai-service/requirements-dev.txt -r simulator/requirements.txt
 cd ai-service
 python -m uvicorn app.main:app --port 8000
 ```
+Leave this running — wait for `Uvicorn running on http://127.0.0.1:8000` before moving on.
 
-Run it as `python -m uvicorn`, not bare `uvicorn` — if the venv's `Scripts`/`bin` folder isn't on `PATH` (a common
-issue on Windows even after activating), the bare command fails with "'uvicorn' is not recognized" even though
-the package installed fine; `python -m` always finds it through the active Python instead. If you still get
-"No module named uvicorn", the install above ran outside this venv — re-run `pip install` in this same
-activated terminal and check with `pip show uvicorn`.
-
-Leave this running. You're ready for the next step once it prints `Uvicorn running on http://127.0.0.1:8000`.
-
-### Terminal 2 — Backend with an embedded MQTT broker
-
+Terminal 2 — backend, **new window**:
 ```bash
 cd backend
 npm install
-```
-
-Create a file named `backend/.env` containing exactly one line:
-
-```
-EMBEDDED_BROKER=true
-```
-
-The backend loads it automatically, so `npm run dev` below never needs an inline environment variable — that
-keeps this step identical on every shell. The easiest way to create it without a shell fighting you over
-quoting is a plain text editor:
-
-```bash
-notepad .env
-```
-
-(macOS/Linux: `nano .env` or any editor.) Say yes to creating a new file, type the line above, save, close.
-If you'd rather use PowerShell, type the command yourself instead of pasting it — copy-pasting from a chat or
-browser often turns straight quotes `"` into curly ones `“ ”`, which PowerShell can't parse:
-
-```powershell
-Set-Content -Path .env -Value 'EMBEDDED_BROKER=true'
-```
-
-Then start the backend:
-
-```bash
+echo "EMBEDDED_BROKER=true" > .env
 npm run dev
 ```
+Leave this running — wait until you see it listening on port 4000.
 
-Leave this running. You're ready once you see it listening on port 4000.
-
-### Terminal 3 — Simulated fleet (5x speed so faults develop within minutes)
-
+Terminal 3 — simulator, **new window**:
 ```bash
+source .venv/bin/activate      # Windows Git Bash: source .venv/Scripts/activate
 cd simulator
 python simulator.py --interval 0.2 --speed 5
 ```
+(Activation only applies to the window you run it in — that's why this repeats it.)
 
-This needs the same Python packages as the AI service. If `python` can't find them (`ModuleNotFoundError`),
-activate the same `.venv` from Terminal 1 in this window too — a venv activation only applies to the terminal
-it was run in, not every window you open.
-
-### Terminal 4 — Dashboard
-
+Terminal 4 — dashboard, **new window**:
 ```bash
 cd web
 npm install
 npm run dev
 ```
 
-Leave this running, then open **http://localhost:5173** and sign in with `demo@machinewatch.io` / `demo1234`.
+</details>
+
+A couple of things that bite people regardless of shell:
+- `python -m uvicorn`, not bare `uvicorn` — if the venv's `Scripts`/`bin` folder isn't on `PATH` (common on
+  Windows even after activating), the bare command fails with "'uvicorn' is not recognized" even though the
+  package installed fine; `python -m` always finds it through the active Python instead. If you still get "No
+  module named uvicorn", the earlier `pip install` ran outside this venv — re-run it in this same activated
+  terminal and check with `pip show uvicorn`.
+- Never chain steps with `&&` (e.g. `cd backend && npm install`) — Windows PowerShell doesn't support it and
+  errors out immediately; every command above is already split onto its own line for this reason.
+
+Once all 4 are running, open **http://localhost:5173** and sign in with `demo@machinewatch.io` / `demo1234`.
 
 After about a minute every model finishes learning. A little later *Air Compressor #2* starts developing bearing
 wear. Watch the AI health score drop and the vibration forecast appear before the 4.5 mm/s warning rule fires.
