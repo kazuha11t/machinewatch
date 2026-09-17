@@ -158,6 +158,18 @@ export function StatusBadge({ status }: { status: DeviceStatus }) {
   );
 }
 
+/** Marks units fed by simulator.py so demo data is never mistaken for a physical sensor. */
+export function SimulatedBadge() {
+  return (
+    <span
+      title="Telemetry comes from the simulator, not a physical sensor"
+      className="label inline-flex items-center border border-dashed border-warn px-1.5 py-0.5 text-[10px] font-semibold text-warn"
+    >
+      Simulated
+    </span>
+  );
+}
+
 export function SeverityBadge({ severity }: { severity: Severity }) {
   const style = SEVERITY_STYLES[severity];
   return (

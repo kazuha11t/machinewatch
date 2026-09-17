@@ -31,7 +31,8 @@ export const DEVICE_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
  *   {prefix}/{deviceId}/telemetry  device -> cloud  sensor readings (JSON)
  *   {prefix}/{deviceId}/status     device -> cloud  "online" | "offline" (retained, used as last will)
  *   {prefix}/{deviceId}/state      device -> cloud  actuator state after a command, e.g. {"relay":true}
- *   {prefix}/{deviceId}/meta       device -> cloud  retained self-description, e.g. {"name":"Pump 1","location":"Line A"}
+ *   {prefix}/{deviceId}/meta       device -> cloud  retained self-description, e.g. {"name":"Pump 1","location":"Line A"};
+ *                                                   simulator.py adds "simulated":true, real firmware omits it
  *   {prefix}/{deviceId}/cmd        cloud -> device  commands, e.g. {"relay":false}
  */
 export class MqttGateway implements CommandPublisher {

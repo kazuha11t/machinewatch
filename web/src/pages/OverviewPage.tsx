@@ -3,8 +3,7 @@ import { BellRing, BrainCircuit, Cpu, PowerOff, TrendingUp } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react';
 import { Link } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
-import { FactoryFloor } from '../components/factory-floor/FactoryFloor';
-import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, Sparkline, StatusBadge, cx, useTilt } from '../components/ui';
+import { Bracket, CountUp, EmptyState, HealthMeter, Marquee, Panel, PanelHeader, SimulatedBadge, Sparkline, StatusBadge, cx, useTilt } from '../components/ui';
 import { api } from '../lib/api';
 import { METRIC_INFO, formatClock, formatHours, formatValue, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -54,8 +53,6 @@ export function OverviewPage() {
           </span>
         ))}
       />
-
-      <FactoryFloor devices={list} latest={latest} now={now} />
 
       <motion.div
         variants={STAGGER_GROUP}
@@ -176,6 +173,7 @@ function MachineCard({ device, reading, history, now }: { device: Device; readin
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <StatusBadge status={device.status} />
+        {device.simulated && <SimulatedBadge />}
         {stopped && !offline && (
           <span className="label inline-flex items-center gap-1 border border-line px-1.5 py-0.5 text-[10px] font-semibold text-muted">
             <PowerOff className="size-3" /> Stopped

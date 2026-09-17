@@ -79,6 +79,17 @@ describe('IngestService', () => {
     assert.equal(device?.type, 'compressor');
   });
 
+  it('flags simulated devices from metadata and clears the flag when real hardware takes over the id', () => {
+    ingest.handleTelemetry('press-01', telemetry({ current: 1 }), NOW);
+    assert.equal(store.getDevice('press-01')?.simulated, false);
+
+    ingest.handleMeta('cmp-9', Buffer.from('{"name":"Compressor 9","simulated":true}'), NOW);
+    assert.equal(store.getDevice('cmp-9')?.simulated, true);
+
+    ingest.handleMeta('cmp-9', Buffer.from('{"name":"Compressor 9"}'), NOW);
+    assert.equal(store.getDevice('cmp-9')?.simulated, false);
+  });
+
   it('updates relay state reported by the device', () => {
     ingest.handleTelemetry('pump-01', telemetry({ current: 5 }), NOW);
     ingest.handleState('pump-01', Buffer.from('{"relay":false}'));

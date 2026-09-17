@@ -24,6 +24,16 @@ export function StatusPill({ status }: { status: DeviceStatus }) {
   );
 }
 
+/** Marks units fed by simulator.py so demo data is never mistaken for a physical sensor. */
+export function SimulatedPill() {
+  const color = SEVERITY_COLORS.warning;
+  return (
+    <View style={[styles.pill, { borderColor: color, borderStyle: 'dashed' }]} accessibilityLabel="Simulated data">
+      <Text style={[styles.pillText, { color }]}>SIMULATED</Text>
+    </View>
+  );
+}
+
 export function SeverityPill({ severity }: { severity: Severity }) {
   const color = SEVERITY_COLORS[severity];
   return (

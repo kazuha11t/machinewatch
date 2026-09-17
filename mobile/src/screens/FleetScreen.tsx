@@ -4,7 +4,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api } from '../api';
-import { Card, EmptyState, HealthMeter, Sparkline, StatusPill } from '../components/ui';
+import { Card, EmptyState, HealthMeter, SimulatedPill, Sparkline, StatusPill } from '../components/ui';
 import { useLive, useNow } from '../live';
 import type { RootStackParamList, TabParamList } from '../navigation';
 import { colors, formatHours, formatValue, METRIC_INFO, mono, timeAgo } from '../theme';
@@ -86,7 +86,10 @@ function MachineCard({ device, reading, history, now, onPress }: { device: Devic
           <Text style={styles.meta} numberOfLines={1}>
             {[device.location, device.type].filter(Boolean).join(' / ') || '—'}
           </Text>
-          <StatusPill status={device.status} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <StatusPill status={device.status} />
+            {device.simulated && <SimulatedPill />}
+          </View>
         </View>
         <HealthMeter score={offline ? null : device.healthScore} status={offline ? null : device.healthStatus} />
       </View>

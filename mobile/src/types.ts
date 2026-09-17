@@ -24,6 +24,8 @@ export interface Device {
   aiStatus: 'learning' | 'ready' | null;
   aiProgress: number | null;
   hoursToLimit: number | null;
+  /** Reported by simulator.py; false for physical nodes. */
+  simulated: boolean;
   createdAt: number;
 }
 

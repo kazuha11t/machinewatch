@@ -5,7 +5,7 @@ import { Link, useParams } from 'react-router';
 import { AlertRow } from '../components/AlertRow';
 import { MachineVisual } from '../components/device-3d/MachineVisual';
 import { TelemetryChart } from '../components/TelemetryChart';
-import { Button, EmptyState, ErrorBanner, Field, FramedPanel, HealthBadge, Modal, Panel, PanelHeader, StatusBadge, cx, inputClass } from '../components/ui';
+import { Button, EmptyState, ErrorBanner, Field, FramedPanel, HealthBadge, Modal, Panel, PanelHeader, SimulatedBadge, StatusBadge, cx, inputClass } from '../components/ui';
 import { api, errorMessage } from '../lib/api';
 import { METRIC_INFO, VIBRATION_LIMIT, VIBRATION_WARNING, formatHours, timeAgo } from '../lib/format';
 import { useLive, useNow } from '../lib/live';
@@ -164,6 +164,7 @@ export function DevicePage() {
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="font-display text-3xl sm:text-4xl">{device.name}</h1>
               <StatusBadge status={device.status} />
+              {device.simulated && <SimulatedBadge />}
             </div>
             <p className="label mt-2 text-[10px] text-muted">
               {[device.location, device.type, device.id].filter(Boolean).join(' / ')} / last seen {timeAgo(device.lastSeen, now)}

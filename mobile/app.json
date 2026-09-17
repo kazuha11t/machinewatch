@@ -31,13 +31,22 @@
         {
           "color": "#38bdf8"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "extra": {
       "apiUrl": "",
       "eas": {
-        "projectId": ""
+        "projectId": "794ea8e8-0b43-477f-94e0-b72a7fadf310"
       }
-    }
+    },
+    "owner": "trieu1912"
   }
 }

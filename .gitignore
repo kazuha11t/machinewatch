@@ -23,6 +23,8 @@ firmware/include/secrets.h
 
 # Local tooling
 .claude/
+scripts/autostart/run.pid.json
+scripts/autostart/logs/
 
 # Editors & OS
 .vscode/*

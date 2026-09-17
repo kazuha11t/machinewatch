@@ -124,7 +124,9 @@ class DeviceConnection:
             return
         p = self.machine.profile
         client.subscribe(self.topic("cmd"), qos=1)
-        client.publish(self.topic("meta"), json.dumps({"name": p.name, "type": p.type, "location": p.location}), qos=1, retain=True)
+        # "simulated" makes the dashboards label this unit, so demo data is never mistaken for real hardware.
+        meta = {"name": p.name, "type": p.type, "location": p.location, "simulated": True}
+        client.publish(self.topic("meta"), json.dumps(meta), qos=1, retain=True)
         client.publish(self.topic("status"), "online", qos=1, retain=True)
         self._publish_state()
         log.info("%s connected", p.device_id)

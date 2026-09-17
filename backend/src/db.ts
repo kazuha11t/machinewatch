@@ -32,10 +32,14 @@ export interface Device {
   aiStatus: AiStatus | null;
   aiProgress: number | null;
   hoursToLimit: number | null;
+  /** True when the node declared itself a simulator in its `meta` message; real hardware never sets it. */
+  simulated: boolean;
   createdAt: number;
 }
 
 export type DevicePatch = Partial<Pick<Device, 'name' | 'type' | 'location'>>;
+/** What a device reports about itself on its retained `meta` topic. */
+export type DeviceMetadata = DevicePatch & Pick<Device, 'simulated'>;
 export type HealthUpdate = Pick<Device, 'healthScore' | 'healthStatus' | 'aiStatus' | 'aiProgress' | 'hoursToLimit'>;
 
 export interface SensorValues {
@@ -110,6 +114,7 @@ CREATE TABLE IF NOT EXISTS devices (
   ai_status      TEXT,
   ai_progress    REAL,
   hours_to_limit REAL,
+  simulated      INTEGER NOT NULL DEFAULT 0,
   created_at     INTEGER NOT NULL
 );
 
@@ -194,6 +199,7 @@ function toDevice(row: Row): Device {
     aiStatus: (row.ai_status as AiStatus | null) ?? null,
     aiProgress: nullableNumber(row.ai_progress),
     hoursToLimit: nullableNumber(row.hours_to_limit),
+    simulated: Number(row.simulated) === 1,
     createdAt: Number(row.created_at),
   };
 }
@@ -246,6 +252,13 @@ export class Store {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.#db = new DatabaseSync(path);
     this.#db.exec(SCHEMA);
+    this.#migrate();
+  }
+
+  /** Upgrades databases created by older versions: `CREATE TABLE IF NOT EXISTS` never adds columns to existing tables. */
+  #migrate(): void {
+    const deviceColumns = new Set((this.#db.prepare('PRAGMA table_info(devices)').all() as Row[]).map((row) => String(row.name)));
+    if (!deviceColumns.has('simulated')) this.#db.exec('ALTER TABLE devices ADD COLUMN simulated INTEGER NOT NULL DEFAULT 0');
   }
 
   close(): void {
@@ -340,17 +353,21 @@ export class Store {
     return this.getDevice(id);
   }
 
-  /** Applies device-reported metadata, filling only fields an operator has not customised. */
-  applyMetadata(id: string, meta: DevicePatch, now = Date.now()): Device {
+  /**
+   * Applies device-reported metadata, filling only fields an operator has not customised.
+   * `simulated` is not operator-editable, so it always follows the latest report.
+   */
+  applyMetadata(id: string, meta: DeviceMetadata, now = Date.now()): Device {
     this.#run('INSERT INTO devices (id, name, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO NOTHING', id, id, now);
     const name = meta.name ?? null;
     const type = meta.type ?? null;
     const location = meta.location ?? null;
     this.#run(
       `UPDATE devices
-          SET name     = CASE WHEN name = id AND ? IS NOT NULL THEN ? ELSE name END,
-              type     = CASE WHEN type = 'machine' AND ? IS NOT NULL THEN ? ELSE type END,
-              location = CASE WHEN location = '' AND ? IS NOT NULL THEN ? ELSE location END
+          SET name      = CASE WHEN name = id AND ? IS NOT NULL THEN ? ELSE name END,
+              type      = CASE WHEN type = 'machine' AND ? IS NOT NULL THEN ? ELSE type END,
+              location  = CASE WHEN location = '' AND ? IS NOT NULL THEN ? ELSE location END,
+              simulated = ?
         WHERE id = ?`,
       name,
       name,
@@ -358,6 +375,7 @@ export class Store {
       type,
       location,
       location,
+      meta.simulated ? 1 : 0,
       id,
     );
     return this.getDevice(id)!;

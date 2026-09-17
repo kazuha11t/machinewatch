@@ -1,4 +1,4 @@
-import type { DevicePatch, DeviceStatus, Reading } from './db.ts';
+import type { DeviceMetadata, DeviceStatus, Reading } from './db.ts';
 
 export type ParsedReading = Omit<Reading, 'anomalyScore'>;
 
@@ -60,16 +60,22 @@ export function parseStatus(payload: Buffer | string): DeviceStatus | null {
   return status === 'online' || status === 'offline' ? status : null;
 }
 
-/** Parses the retained self-description a device publishes on connect, e.g. `{"name":"Air Compressor #1"}`. */
-export function parseMeta(payload: Buffer | string): DevicePatch | null {
+/**
+ * Parses the retained self-description a device publishes on connect, e.g. `{"name":"Air Compressor #1"}`.
+ * `simulated` is only true when the payload says so explicitly: meta is the device's full self-description,
+ * so a real node reusing a simulator's id clears the flag just by omitting it.
+ */
+export function parseMeta(payload: Buffer | string): DeviceMetadata | null {
   const data = parseJsonObject(payload);
   if (!data) return null;
   const pick = (key: string, maxLength: number) => {
     const value = data[key];
     return typeof value === 'string' && value.trim() !== '' ? value.trim().slice(0, maxLength) : undefined;
   };
-  const meta = { name: pick('name', 80), type: pick('type', 40), location: pick('location', 120) };
-  return Object.values(meta).some((value) => value !== undefined) ? meta : null;
+  const fields = { name: pick('name', 80), type: pick('type', 40), location: pick('location', 120) };
+  const simulated = data.simulated === true;
+  const described = simulated || Object.values(fields).some((value) => value !== undefined);
+  return described ? { ...fields, simulated } : null;
 }
 
 /** Parses the state a device reports back after executing a command, e.g. `{"relay":true}`. */

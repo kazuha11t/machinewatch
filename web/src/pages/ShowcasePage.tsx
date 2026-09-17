@@ -177,6 +177,7 @@ function buildDemoFleet(now: number): { demoDevices: Device[]; demoLatest: Recor
     aiStatus: 'ready',
     aiProgress: 1,
     hoursToLimit: null,
+    simulated: true,
     createdAt: now,
   }));
 

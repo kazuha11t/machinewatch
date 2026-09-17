@@ -3,7 +3,7 @@ import { Alert as NativeAlert, ScrollView, StyleSheet, Text, View } from 'react-
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { api, errorMessage } from '../api';
 import { AlertItem } from '../components/AlertItem';
-import { Button, Card, EmptyState, HealthRing, Sparkline, StatusPill } from '../components/ui';
+import { Button, Card, EmptyState, HealthRing, SimulatedPill, Sparkline, StatusPill } from '../components/ui';
 import { useLive, useNow } from '../live';
 import type { RootStackParamList } from '../navigation';
 import { colors, formatValue, HEALTH_COLORS, METRIC_INFO, mono, timeAgo } from '../theme';
@@ -80,7 +80,10 @@ export function DeviceScreen({ route, navigation }: Props) {
       <Card style={styles.healthCard}>
         <HealthRing score={device.healthScore} status={device.healthStatus} size={84} />
         <View style={{ flex: 1, gap: 6 }}>
-          <StatusPill status={device.status} />
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            <StatusPill status={device.status} />
+            {device.simulated && <SimulatedPill />}
+          </View>
           <Text style={[styles.healthLabel, device.healthStatus && { color: HEALTH_COLORS[device.healthStatus] }]}>
             {device.healthStatus ? device.healthStatus.toUpperCase() : 'NO SCORE YET'}
           </Text>
