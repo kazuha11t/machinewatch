@@ -3,7 +3,7 @@
 **Real-time industrial machine monitoring with AI-based predictive maintenance.**
 
 ESP32 sensor nodes stream temperature, vibration, motor current and humidity over MQTT. A Node.js backend stores
-the data, evaluates alert rules and pushes live updates to a 3D-visualized React dashboard and a React Native app.
+the data, evaluates alert rules and pushes live updates to a React dashboard and a React Native app.
 A Python service learns each machine's normal behaviour, flags anomalies and forecasts when vibration will cross
 the ISO 10816 limit, often **before** any fixed threshold is reached.
 
@@ -18,14 +18,14 @@ A public, no-login showcase page (`/showcase`) walks through the same pipeline f
 ## Features
 
 - **End-to-end IoT pipeline:** ESP32 firmware → MQTT → Node.js → SQLite → WebSocket → web and mobile.
-- **Live dashboard:** fleet overview with an interactive 3D factory floor (drag to orbit, click a unit to open it), per-machine charts (15 min to 24 h, auto-downsampled) alongside a live 3D machine model, CSV export.
+- **Live dashboard:** fleet overview, per-machine charts (15 min to 24 h, auto-downsampled) alongside a live 3D machine model, CSV export.
 - **AI anomaly detection:** a per-device Isolation Forest trained on the machine's own baseline, a health score from 0 to 100, and a vibration trend forecast (`limit in ~3.5 h`).
 - **Alert engine:** threshold rules with cooldowns, AI anomaly alerts and offline detection (MQTT last will plus a heartbeat timeout).
 - **Remote control:** start or stop a machine through a relay, with state confirmed by the device.
 - **Mobile app:** fleet status, live metrics, alerts and push notifications for critical events.
 - **Device auto-registration:** a node announces its name, location and whether it's a simulator over a retained `meta` topic.
 - **Hardware-free demo:** a physics-based simulator with realistic faults (bearing wear, overheating, vibration spikes).
-- **Public showcase page:** an animated, no-login marketing page (`/showcase`) that tells the product story for visitors and links through to the live demo.
+- **Public showcase page:** an animated, no-login marketing page (`/showcase`) with an interactive 3D factory floor, walking visitors through the product story and linking through to the live demo.
 
 ## Architecture
 
