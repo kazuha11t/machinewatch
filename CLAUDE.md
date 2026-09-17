@@ -61,7 +61,7 @@ pio run -t upload && pio device monitor      # flash a real device; needs includ
 cd simulator && python simulator.py --interval 0.2 --speed 5   # faster fault development for manual testing
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the backend, web, ai-service and firmware jobs above
+GitHub Actions (`.github/workflows/ci.yml`) runs the backend, web, mobile, ai-service and firmware jobs above
 independently, each scoped to its own directory.
 
 ## Architecture
