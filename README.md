@@ -2,10 +2,12 @@
 
 **Real-time industrial machine monitoring with AI-based predictive maintenance.**
 
-ESP32 sensor nodes stream temperature, vibration and motor current over MQTT. A Node.js backend stores the data,
-evaluates alert rules and pushes live updates to a React dashboard and a React Native app. A Python service learns
-each machine's normal behaviour, flags anomalies and forecasts when vibration will cross the ISO 10816 limit,
-often **before** any fixed threshold is reached.
+ESP32 sensor nodes stream temperature, vibration, motor current and humidity over MQTT. A Node.js backend stores
+the data, evaluates alert rules and pushes live updates to a 3D-visualized React dashboard and a React Native app.
+A Python service learns each machine's normal behaviour, flags anomalies and forecasts when vibration will cross
+the ISO 10816 limit, often **before** any fixed threshold is reached.
+
+A public, no-login showcase page (`/showcase`) walks through the same pipeline for visitors and links through to the live demo.
 
 ![Fleet overview](docs/screenshots/02-overview.png)
 
@@ -16,13 +18,14 @@ often **before** any fixed threshold is reached.
 ## Features
 
 - **End-to-end IoT pipeline:** ESP32 firmware → MQTT → Node.js → SQLite → WebSocket → web and mobile.
-- **Live dashboard:** fleet overview, per-machine charts (15 min to 24 h, auto-downsampled), CSV export.
+- **Live dashboard:** fleet overview with an interactive 3D factory floor (drag to orbit, click a unit to open it), per-machine charts (15 min to 24 h, auto-downsampled) alongside a live 3D machine model, CSV export.
 - **AI anomaly detection:** a per-device Isolation Forest trained on the machine's own baseline, a health score from 0 to 100, and a vibration trend forecast (`limit in ~3.5 h`).
 - **Alert engine:** threshold rules with cooldowns, AI anomaly alerts and offline detection (MQTT last will plus a heartbeat timeout).
 - **Remote control:** start or stop a machine through a relay, with state confirmed by the device.
 - **Mobile app:** fleet status, live metrics, alerts and push notifications for critical events.
-- **Device auto-registration:** a node announces its name and location over a retained `meta` topic.
+- **Device auto-registration:** a node announces its name, location and whether it's a simulator over a retained `meta` topic.
 - **Hardware-free demo:** a physics-based simulator with realistic faults (bearing wear, overheating, vibration spikes).
+- **Public showcase page:** an animated, no-login marketing page (`/showcase`) that tells the product story for visitors and links through to the live demo.
 
 ## Architecture
 
@@ -48,7 +51,7 @@ flowchart LR
 | Messaging | MQTT 3.1.1 (Mosquitto in production, Aedes embedded for local development) |
 | Backend | Node.js 24, TypeScript, Express 5, Socket.IO, SQLite (`node:sqlite`), JWT |
 | AI | Python 3.11, FastAPI, scikit-learn (Isolation Forest), NumPy |
-| Web | React 19, TypeScript, Vite, Tailwind CSS 4, Recharts |
+| Web | React 19, TypeScript, Vite, Tailwind CSS 4, Recharts, React Three Fiber / Drei (3D), GSAP + Motion (animation) |
 | Mobile | Expo SDK 57, React Native, React Navigation, expo-notifications |
 | DevOps | Docker Compose, Nginx, GitHub Actions CI |
 
@@ -57,11 +60,11 @@ flowchart LR
 ```
 backend/     Node.js API: MQTT ingestion, rules, REST, WebSocket, push notifications
 ai-service/  FastAPI anomaly detection and health scoring
-web/         React operator dashboard
+web/         React operator dashboard (3D-visualized) + public showcase page
 mobile/      Expo / React Native app
 firmware/    ESP32 PlatformIO project (wiring guide in firmware/README.md)
 simulator/   Simulated machine fleet that speaks the same MQTT contract
-scripts/     Tooling, e.g. automated screenshot capture
+scripts/     Tooling, e.g. automated screenshot capture, Windows dev-server autostart
 ```
 
 ## Quick start (no Docker)
@@ -123,7 +126,8 @@ In development the app reaches the backend on the computer running Metro (port 4
 ## How the AI works
 
 1. **Baseline:** the first 300 readings per machine (configurable) define its normal operating envelope.
-   Features are the sensors that device actually reports.
+   Features are whichever of temperature, vibration and current that device actually reports — humidity is
+   tracked and charted but never scored by the AI model.
 2. **Scoring:** an Isolation Forest scores each reading. Scores are normalised so 0 is typical, 0.5 is the learned
    anomaly boundary and 1 is strongly abnormal.
 3. **Health:** a combination of the recent anomaly rate and severity, minus a penalty when a limit breach is imminent.
@@ -140,6 +144,7 @@ Models are persisted per device and can be reset from the dashboard ("Retrain AI
 | --- | --- | --- |
 | `POST` | `/api/auth/login` | Obtain a JWT |
 | `GET` | `/api/devices` | List machines with status and health |
+| `GET` | `/api/devices/:id` | Single machine detail |
 | `PATCH` / `DELETE` | `/api/devices/:id` | Rename or relocate, or remove a machine |
 | `GET` | `/api/devices/:id/telemetry?from&to&maxPoints` | Readings (bucketed when the range is large) |
 | `GET` | `/api/devices/:id/telemetry.csv` | CSV export |
@@ -148,6 +153,7 @@ Models are persisted per device and can be reset from the dashboard ("Retrain AI
 | `GET` | `/api/alerts?state=open\|acknowledged\|all` | Alert feed |
 | `POST` | `/api/alerts/:id/ack`, `/api/alerts/ack-all` | Acknowledge |
 | `GET` / `POST` / `PATCH` / `DELETE` | `/api/rules` | Threshold rules |
+| `POST` / `DELETE` | `/api/push-tokens` / `/api/push-tokens/:token` | Register / unregister an Expo push token |
 | `GET` | `/api/health` | Service, MQTT and AI status |
 
 WebSocket events: `telemetry`, `scores`, `device`, `device:removed`, `alert`, `alert:updated`, `alerts:changed`.
