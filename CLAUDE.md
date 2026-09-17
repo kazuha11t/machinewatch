@@ -29,7 +29,7 @@ npm run typecheck                            # tsc --noEmit — CI treats type e
 ```bash
 cd ai-service
 pip install -r requirements-dev.txt
-uvicorn app.main:app --port 8000 --reload
+python -m uvicorn app.main:app --port 8000 --reload   # bare `uvicorn` can 404/"not recognized" if venv Scripts isn't on PATH
 pytest                                       # all tests
 pytest tests/test_detector.py::test_health_score_penalizes_drift   # single test
 ```

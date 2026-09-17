@@ -100,8 +100,12 @@ Activate it for your shell, then install and run:
 ```bash
 pip install -r ai-service/requirements-dev.txt -r simulator/requirements.txt
 cd ai-service
-uvicorn app.main:app --port 8000
+python -m uvicorn app.main:app --port 8000
 ```
+
+Run it as `python -m uvicorn`, not bare `uvicorn` — if the venv's `Scripts`/`bin` folder isn't on `PATH` (a common
+issue on Windows even after activating), the bare command fails with "not recognized" even though the package
+installed fine; `python -m` always finds it through the active Python instead.
 
 ```bash
 # 2. Backend with an embedded MQTT broker (new terminal)
