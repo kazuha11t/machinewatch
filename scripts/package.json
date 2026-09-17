@@ -1,16 +1,12 @@
 {
   "name": "@machinewatch/scripts",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Dev tooling for MachineWatch: dashboard screenshot capture (Playwright) and Windows autostart scripts",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
-  "private": "true",
+  "private": true,
   "devDependencies": {
     "playwright-core": "^1.63.0"
   }

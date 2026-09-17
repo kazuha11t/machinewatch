@@ -16,11 +16,15 @@ app just opens and shows live data — no terminal, no `npm run dev` / `uvicorn`
   ~30s after you log into Windows, then runs it once immediately.
 - `unregister.ps1` — removes the scheduled task and stops the processes.
 - `mobile/eas.json` — a `production` build profile that bakes the backend's LAN URL
-  (`http://192.168.1.192:4000`) into a standalone Android build via `EXPO_PUBLIC_API_URL`, so the
-  installed app never needs Metro/`expo start` running.
-- `web/dist` — a production build of the dashboard (`VITE_API_URL=http://192.168.1.192:4000 npm
+  (`http://<your-LAN-IP>:4000`, stored on EAS as `EXPO_PUBLIC_API_URL`, see step 4) into a
+  standalone Android build, so the installed app never needs Metro/`expo start` running.
+- `web/dist` — a production build of the dashboard (`VITE_API_URL=http://<your-LAN-IP>:4000 npm
   run build` in `web/`), so it talks straight to the backend over the LAN instead of relying on
   Vite's dev-only `/api` proxy.
+
+`<your-LAN-IP>` below means this laptop's IPv4 address on your Wi-Fi/LAN (`ipconfig`). Optionally
+set it once as a user environment variable, `[Environment]::SetEnvironmentVariable('MACHINEWATCH_LAN_IP', '<your-LAN-IP>', 'User')`,
+so `start.ps1` can print the exact web build command if `web/dist` is missing.
 
 ## One-time setup (run these yourself)
 
@@ -41,26 +45,29 @@ New-NetFirewallRule -DisplayName "MachineWatch Web" -Direction Inbound -Protocol
 **3. Give the laptop a fixed LAN IP**, otherwise the address baked into the phone app (and the
 one your ESP32 nodes are configured with) will break next time your router hands out a different
 IP. Easiest option: log into your router and add a **DHCP reservation** for this laptop's MAC
-address, pinned to `192.168.1.192` (its current address). Alternative: set a static IP in Windows
-network adapter settings. If you use a different IP, update it in `mobile/eas.json` before
-building.
+address, pinned to its current address (`<your-LAN-IP>`). Alternative: set a static IP in Windows
+network adapter settings. If the IP changes, update the EAS variable (step 4) and rebuild both the
+app and `web/dist`.
 
 **4. Build the standalone Android app** (needs a free Expo account):
 ```powershell
 cd mobile
 npx eas-cli login          # once, interactive
 npx eas-cli init           # once, links this project to your Expo account (fills app.json's eas.projectId)
+npx eas-cli env:set --name EXPO_PUBLIC_API_URL --value http://<your-LAN-IP>:4000 --environment production --visibility plaintext
 npx eas-cli build -p android --profile production
 ```
+The cloud build only sees variables stored on EAS (not your shell or a `.env` file), which is why
+`env:set` comes first; the `production` profile reads the `production` EAS environment.
 `eas build` uploads and builds in the cloud; when it finishes it gives you a download link/QR for
 an `.apk`. Download it on the phone and install it (allow "install from unknown sources" once).
-From then on, opening the app talks straight to `http://192.168.1.192:4000` — no laptop terminal
+From then on, opening the app talks straight to `http://<your-LAN-IP>:4000` — no laptop terminal
 needed, only the laptop being on and logged in with MachineWatch auto-started.
 
 ## Day to day
 
 - Laptop boots → log in → wait ~30s → backend/AI/web are up. Open the app on the phone, or
-  `http://192.168.1.192:5173` in a browser on any device on the same LAN for the dashboard.
+  `http://<your-LAN-IP>:5173` in a browser on any device on the same LAN for the dashboard.
 - Check logs: `scripts/autostart/logs/{backend,ai-service,web}.log` (and the matching `.err.log`).
 - Manually stop/restart: `.\stop.ps1` then `.\start.ps1`.
 - Remove auto-start entirely: `.\unregister.ps1`.
@@ -68,7 +75,7 @@ needed, only the laptop being on and logged in with MachineWatch auto-started.
   whatever is already in `web/dist`, it does not rebuild):
   ```powershell
   cd web
-  $env:VITE_API_URL = "http://192.168.1.192:4000"
+  $env:VITE_API_URL = "http://<your-LAN-IP>:4000"
   npm run build
   cd ..\scripts\autostart
   .\stop.ps1; .\start.ps1

@@ -6,11 +6,9 @@
   "build": {
     "production": {
       "distribution": "internal",
+      "environment": "production",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.1.192:4000"
       }
     }
   }

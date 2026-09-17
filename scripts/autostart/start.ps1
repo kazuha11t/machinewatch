@@ -4,6 +4,13 @@
 # scripts/autostart/README.md. The web dashboard is a static production build (`npm run build`
 # in web/, baked with VITE_API_URL) served via `vite preview`; rebuild it manually after pulling
 # web changes — this script does not rebuild it.
+#
+# -LanIp (or $env:MACHINEWATCH_LAN_IP) is this machine's LAN address. It is optional and only used to
+# print the exact web build command when web/dist is missing; register.ps1 passes no arguments.
+
+param(
+    [string]$LanIp = $env:MACHINEWATCH_LAN_IP
+)
 
 $ErrorActionPreference = 'Stop'
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
@@ -49,7 +56,12 @@ $backend = Start-Process -FilePath 'node.exe' `
 
 $webDist = Join-Path $root 'web\dist'
 if (-not (Test-Path $webDist)) {
-    throw "web/dist not found. Build it first: cd web; `$env:VITE_API_URL = 'http://192.168.1.192:4000'; npm run build"
+    $apiHost = if ($LanIp) { $LanIp } else { '<your-LAN-IP>' }
+    $hint = "web/dist not found. Build it first: cd web; `$env:VITE_API_URL = 'http://${apiHost}:4000'; npm run build"
+    if (-not $LanIp) {
+        $hint += " (replace <your-LAN-IP> with this machine's LAN address from ipconfig, or set MACHINEWATCH_LAN_IP / pass -LanIp to fill it in)"
+    }
+    throw $hint
 }
 
 $web = Start-Process -FilePath 'node.exe' `
