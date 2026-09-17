@@ -1,5 +1,7 @@
 # MachineWatch
 
+[![CI](https://github.com/kazuha11t/machinewatch/actions/workflows/ci.yml/badge.svg)](https://github.com/kazuha11t/machinewatch/actions/workflows/ci.yml)
+
 **Real-time industrial machine monitoring with AI-based predictive maintenance.**
 
 ESP32 sensor nodes stream temperature, vibration, motor current and humidity over MQTT. A Node.js backend stores
@@ -228,8 +230,10 @@ npm install
 npx expo start
 ```
 
-In development the app reaches the backend on the computer running Metro (port 4000). For builds, set
-`EXPO_PUBLIC_API_URL`. Remote push notifications need a development build and an EAS project id
+In development the app reaches the backend on the computer running Metro (port 4000). A standalone build
+needs the backend URL baked in: EAS cloud builds do not see your shell or `.env` variables, so store it on EAS
+first (`npx eas-cli env:set --name EXPO_PUBLIC_API_URL --value http://<backend-host>:4000 --environment production --visibility plaintext`),
+then run `npx eas-cli build -p android --profile production`. Remote push notifications need a development build and an EAS project id
 (`expo.extra.eas.projectId`). In Expo Go the app falls back to local notifications fed by the live socket.
 
 ## How the AI works
@@ -246,6 +250,17 @@ In development the app reaches the backend on the computer running Metro (port 4
    Single spikes do not page anyone.
 
 Models are persisted per device and can be reset from the dashboard ("Retrain AI").
+
+**How much earlier the AI warns** than the default threshold rules, in seconds after the simulator starts (range over seeds 1–3):
+
+| Simulated fault | AI health turns "warning" | Vibration forecast appears | Fixed rule fires | AI lead |
+| --- | --- | --- | --- | --- |
+| Air Compressor #2, bearing wear | 620–630 s | 660–680 s | vibration > 4.5 mm/s at 831–864 s | 201–239 s (3.4–4 min) |
+| Conveyor Motor, overheating | 885–900 s | none (no vibration trend) | temperature > 85 °C at 1453–1456 s | 556–569 s (9.3–9.5 min) |
+
+These numbers come from `ai-service/tests/test_scenario_lead_time.py`, an in-memory replay of the simulator's
+physics (one reading per second, default fault timing) into the detector with the backend's batch size of 5 and
+300-reading baseline, not an end-to-end run through MQTT and the backend.
 
 ## API overview
 
@@ -277,11 +292,14 @@ cd ../ai-service
 pytest                 # detector, forecasting, persistence, API
 cd ../web
 npm run build
+cd ../mobile
+npm run typecheck
 cd ../firmware
 pio run
 ```
 
-All of these run in GitHub Actions on every push.
+GitHub Actions runs each of these as a separate job, including the mobile typecheck, on every push to any branch
+and on pull requests.
 
 ## License
 
