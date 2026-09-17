@@ -69,23 +69,59 @@ scripts/     Tooling, e.g. automated screenshot capture, Windows dev-server auto
 
 ## Quick start (no Docker)
 
-Requirements: Node.js 24+, Python 3.11+.
+Requirements: Node.js 24+ and Python 3.11+ — check both *before* the steps below, since a mismatch is the
+most common reason this fails on a machine that isn't the one it was developed on:
+- `node --version` must print v24 or higher. The backend runs `.ts` files directly and uses the built-in
+  `node:sqlite` module; both need Node 24, and an older Node fails immediately with a syntax error on every
+  backend file rather than a clear version message.
+- `python --version` (or `python3 --version` on macOS/Linux) must print 3.11+.
+
+Run each command on its own line rather than chaining with `&&` — Windows PowerShell, the default shell on
+most Windows machines, doesn't support it and errors out immediately.
 
 ```bash
-# 1. AI service
-python -m venv .venv && .venv/Scripts/activate      # macOS/Linux: source .venv/bin/activate
+# 1. AI service — create and use a virtual environment
+python -m venv .venv
+```
+
+Activate it for your shell, then install and run:
+
+| Shell | Activate with |
+| --- | --- |
+| macOS/Linux | `source .venv/bin/activate` |
+| Windows PowerShell | `.venv\Scripts\Activate.ps1` (if blocked, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then retry) |
+| Windows cmd.exe | `.venv\Scripts\activate.bat` |
+
+```bash
 pip install -r ai-service/requirements-dev.txt -r simulator/requirements.txt
-cd ai-service && uvicorn app.main:app --port 8000
+cd ai-service
+uvicorn app.main:app --port 8000
+```
 
+```bash
 # 2. Backend with an embedded MQTT broker (new terminal)
-cd backend && npm install
-EMBEDDED_BROKER=true npm run dev
+cd backend
+npm install
+```
 
+Create `backend/.env` containing one line, `EMBEDDED_BROKER=true` — the backend loads it automatically, so
+the run command below stays identical on every shell instead of needing an inline env var:
+
+```bash
+npm run dev
+```
+
+```bash
 # 3. Simulated fleet (new terminal): 5x speed so faults develop within minutes
-cd simulator && python simulator.py --interval 0.2 --speed 5
+cd simulator
+python simulator.py --interval 0.2 --speed 5
+```
 
+```bash
 # 4. Dashboard (new terminal)
-cd web && npm install && npm run dev
+cd web
+npm install
+npm run dev
 ```
 
 Open http://localhost:5173 and sign in with `demo@machinewatch.io` / `demo1234`.
@@ -109,13 +145,15 @@ See [firmware/README.md](firmware/README.md) for wiring, configuration and the M
 ```bash
 cd firmware
 cp include/secrets.example.h include/secrets.h   # Wi-Fi, broker IP, device name
-pio run -t upload && pio device monitor
+pio run -t upload
+pio device monitor
 ```
 
 ## Mobile app
 
 ```bash
-cd mobile && npm install
+cd mobile
+npm install
 npx expo start
 ```
 
@@ -161,10 +199,15 @@ WebSocket events: `telemetry`, `scores`, `device`, `device:removed`, `alert`, `a
 ## Tests
 
 ```bash
-cd backend && npm test && npm run typecheck      # ingestion, alert rules, AI integration, HTTP API
-cd ai-service && pytest                          # detector, forecasting, persistence, API
-cd web && npm run build
-cd firmware && pio run
+cd backend
+npm test              # ingestion, alert rules, AI integration, HTTP API
+npm run typecheck
+cd ../ai-service
+pytest                 # detector, forecasting, persistence, API
+cd ../web
+npm run build
+cd ../firmware
+pio run
 ```
 
 All of these run in GitHub Actions on every push.
