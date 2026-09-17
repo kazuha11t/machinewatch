@@ -99,6 +99,7 @@ Activate it for your shell:
 | macOS/Linux | `source .venv/bin/activate` |
 | Windows PowerShell | `.venv\Scripts\Activate.ps1` (if blocked, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then retry) |
 | Windows cmd.exe | `.venv\Scripts\activate.bat` |
+| Windows Git Bash | `source .venv/Scripts/activate` — note it's `Scripts`, not `bin`, even though the command is the Unix-style `source` |
 
 You should see `(.venv)` appear at the start of your prompt. Then, in that same terminal:
 
